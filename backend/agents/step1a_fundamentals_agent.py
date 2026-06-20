@@ -1,0 +1,106 @@
+"""
+backend/agents/step1a_fundamentals_agent.py
+
+Fundamentals Agent — collects balance-sheet and profitability metrics
+from yfinance and packages them into a typed Pydantic model.
+
+Design principles (echoed throughout all agent files):
+  - One Pydantic model  → defines what this agent produces.
+  - One pure function   → does the actual computation (easy to unit-test).
+  - One node wrapper    → thin bridge between the pure function and LangGraph.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel
+
+from backend.data.market_data import get_fundamentals_data
+
+if TYPE_CHECKING:
+    # GraphState is only needed for type-checking; avoids a circular import at runtime.
+    from backend.app import GraphState
+
+
+# ---------------------------------------------------------------------------
+# Pydantic result model
+# ---------------------------------------------------------------------------
+
+
+class FundamentalsResult(BaseModel):
+    """
+    Snapshot of key fundamental metrics for one ticker.
+
+    All numeric fields are Optional[float] because yfinance does not always
+    have data for every metric on every stock.  `data_available` is False
+    when yfinance returned nothing useful at all.
+    """
+
+    ticker: str
+    current_ratio: float | None = None       # Current assets / current liabilities
+    debt_to_equity: float | None = None      # Total debt / shareholder equity
+    roe: float | None = None                 # Return on equity (net income / equity)
+    gross_margin: float | None = None        # Gross profit / revenue (latest year)
+    gross_margin_trend: str | None = None    # "Improving", "Stable", or "Declining"
+    data_available: bool = True              # False if yfinance returned nothing
+
+
+# ---------------------------------------------------------------------------
+# Pure computation function
+# ---------------------------------------------------------------------------
+
+
+def compute_fundamentals(ticker: str) -> FundamentalsResult:
+    """
+    Fetch fundamental data for `ticker` and return a FundamentalsResult.
+
+    This function never raises — missing or broken data becomes None /
+    data_available=False so the rest of the pipeline can still run.
+    """
+    raw: dict[str, Any] = get_fundamentals_data(ticker)
+
+    if not raw:
+        return FundamentalsResult(ticker=ticker, data_available=False)
+
+    # Gross margin "trend" is a simplified reading: we only have one snapshot
+    # from yfinance's .info dict, so we label it as a static value here.
+    # A more advanced version would compare trailing annual income statements.
+    gross_margin = raw.get("grossMargins")
+    if gross_margin is not None:
+        if gross_margin > 0.5:
+            trend = "Strong"
+        elif gross_margin > 0.25:
+            trend = "Moderate"
+        else:
+            trend = "Thin"
+    else:
+        trend = None
+
+    return FundamentalsResult(
+        ticker=ticker,
+        current_ratio=raw.get("currentRatio"),
+        debt_to_equity=raw.get("debtToEquity"),
+        roe=raw.get("returnOnEquity"),
+        gross_margin=gross_margin,
+        gross_margin_trend=trend,
+        data_available=True,
+    )
+
+
+# ---------------------------------------------------------------------------
+# LangGraph node wrapper
+# ---------------------------------------------------------------------------
+
+
+def fundamentals_node(state: "GraphState") -> dict:
+    """
+    LangGraph node: runs compute_fundamentals and returns the result so
+    LangGraph can merge it back into the shared state.
+
+    LangGraph calls each node with the current state dict and expects a dict
+    back containing only the keys that changed.
+    """
+    ticker: str = state["ticker"]
+    result = compute_fundamentals(ticker)
+    return {"fundamentals_result": result}
