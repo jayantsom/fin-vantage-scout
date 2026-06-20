@@ -35,7 +35,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 from typing_extensions import TypedDict
@@ -165,6 +169,41 @@ app = FastAPI(
     description="Multi-agent equity screener — educational portfolio project.",
     version="0.1.0",
 )
+
+# ---------------------------------------------------------------------------
+# CORS — allow the browser's fetch() calls to reach /analyze from any
+# localhost origin (Streamlit used port 8501; the new HTML frontend is
+# served directly by this FastAPI server on port 8000).
+# ---------------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000", "null"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# Static files + Jinja2 templates
+# Paths are relative to this file (backend/app.py).
+# ROOT is already defined above as the project root directory.
+# ---------------------------------------------------------------------------
+
+_FRONTEND = ROOT / "frontend"
+
+# Mount /static → frontend/static/ so the browser can load CSS, JS, images.
+app.mount("/static", StaticFiles(directory=_FRONTEND / "static"), name="static")
+
+# Jinja2Templates points at frontend/templates/ which holds index.html.
+_templates = Jinja2Templates(directory=_FRONTEND / "templates")
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def serve_frontend(request: Request) -> HTMLResponse:
+    """Serve the single-page frontend at the root URL."""
+    try:
+        return _templates.TemplateResponse(request, "index.html")
+    except TypeError:
+        return _templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/health")

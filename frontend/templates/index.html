@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fin-Vantage Scout — Equity Intelligence Platform</title>
+  <meta name="description" content="Multi-agent equity screening platform — fundamentals, momentum, and news sentiment synthesised into structured investment intelligence." />
+
+  <!-- Tailwind CSS Play CDN (zero install — one script tag) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: { brand: '#00b4d8', gold: '#f0c040' }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom design-system CSS -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+<div class="app-shell">
+
+  <!-- ════════════════════════════════════════════════════════════
+       SIDEBAR
+  ════════════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <img src="/static/img/icon.jpg" alt="Fin-Vantage Scout logo" />
+      <div>
+        <div class="sidebar-logo-text">Fin-Vantage Scout</div>
+        <div class="sidebar-logo-sub">Equity Intelligence</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analysis</div>
+
+      <button class="sidebar-nav-item active" onclick="scrollToPanel()">
+        <!-- chart-bar icon -->
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Screener
+        <span class="sidebar-pill pill-live">Live</span>
+      </button>
+
+      <button class="sidebar-nav-item" onclick="scrollToResults()">
+        <!-- document icon -->
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Results
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <!-- Data sources -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Data Sources</div>
+
+      <div class="sidebar-nav-item" style="cursor:default;">
+        <!-- database icon -->
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 4 1.79 4 8"/>
+        </svg>
+        Yahoo Finance
+        <span class="sidebar-pill pill-free">Free</span>
+      </div>
+
+      <div class="sidebar-nav-item" style="cursor:default;">
+        <!-- newspaper icon -->
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+        </svg>
+        DuckDuckGo News
+        <span class="sidebar-pill pill-free">Free</span>
+      </div>
+
+      <div class="sidebar-nav-item" style="cursor:default;">
+        <!-- cpu icon -->
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        </svg>
+        Groq LLaMA
+        <span class="sidebar-pill pill-free">Free</span>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <!-- Pipeline -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Agent Pipeline</div>
+      <div style="padding: 4px 6px; font-size:11px; color:var(--text-muted); line-height:1.8;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-teal-dim);border:1px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-teal);flex-shrink:0;">1a</span>
+          Fundamentals Agent
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-teal-dim);border:1px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-teal);flex-shrink:0;">1b</span>
+          Momentum Agent
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-teal-dim);border:1px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-teal);flex-shrink:0;">1c</span>
+          News Sentiment Agent
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-gold-dim);border:1px solid var(--brand-gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-gold);flex-shrink:0;">2</span>
+          Synthesis Agent
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <!-- Limitations -->
+    <div style="padding: 0 14px 12px;">
+      <div class="sidebar-info-block">
+        <div class="info-title">
+          <!-- warning icon -->
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          Known Limitations
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;">
+          <li style="padding:1px 0;">· 15-min data delay (Yahoo Finance)</li>
+          <li style="padding:1px 0;">· No real-time news feed</li>
+          <li style="padding:1px 0;">· LLM ratings are heuristic</li>
+          <li style="padding:1px 0;">· Single snapshot fundamentals</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tech stack tags -->
+    <div class="sidebar-stack-tags">
+      <span class="stack-tag">FastAPI</span>
+      <span class="stack-tag">LangGraph</span>
+      <span class="stack-tag">Groq</span>
+      <span class="stack-tag">yfinance</span>
+      <span class="stack-tag">Python 3.11</span>
+    </div>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar-footer">
+      Portfolio / educational project.<br>
+      Not for production use.
+    </div>
+
+  </aside><!-- /sidebar -->
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════════════════════════ -->
+  <div class="main-content">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div>
+        <div class="topbar-title">Equity Screening Dashboard</div>
+        <div class="topbar-subtitle">Multi-agent analysis · LangGraph fan-out pipeline</div>
+      </div>
+      <div class="health-indicator">
+        <div class="health-dot" id="health-dot"></div>
+        <span id="health-label">Checking…</span>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="page-wrapper" id="top">
+
+      <!-- ── Control panel ────────────────────────────────────── -->
+      <section class="control-panel" id="control-panel">
+        <div class="panel-heading">Configure Analysis Run</div>
+
+        <!-- Mode selector -->
+        <div class="mode-toggle" role="group" aria-label="Analysis mode">
+          <button
+            class="mode-btn active"
+            id="btn-manual"
+            onclick="setMode('manual')"
+            aria-pressed="true"
+          >
+            <!-- pencil icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+            Manual — Enter tickers
+          </button>
+          <button
+            class="mode-btn"
+            id="btn-auto"
+            onclick="setMode('auto_screen')"
+            aria-pressed="false"
+          >
+            <!-- magnifying-glass icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Auto-Screen — Top 10 FFTY
+          </button>
+        </div>
+
+        <!-- Manual mode: ticker input -->
+        <div id="manual-input-row" class="ticker-input-wrap">
+          <input
+            type="text"
+            id="ticker-input"
+            class="ticker-input"
+            placeholder="e.g. AAPL, NVDA, MU, MSFT"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            oninput="onTickerInput()"
+            onkeydown="onTickerKeydown(event)"
+            aria-label="Comma-separated stock tickers"
+          />
+          <button
+            class="run-btn"
+            id="run-btn"
+            onclick="runAnalysis()"
+            disabled
+            aria-label="Run analysis"
+          >
+            <!-- play icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Run Analysis
+          </button>
+        </div>
+
+        <!-- Auto-screen mode hint -->
+        <div id="auto-screen-row" style="display:none;">
+          <div class="auto-screen-hint" style="display:block;">
+            Fetches current FFTY ETF holdings, runs a momentum pre-screen, and analyses the top 10 candidates.
+            This may take 1–2 minutes.
+          </div>
+          <div style="margin-top:10px;">
+            <button
+              class="run-btn"
+              id="run-btn-auto"
+              onclick="runAnalysis()"
+              aria-label="Run auto-screen analysis"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Run Auto-Screen
+            </button>
+          </div>
+        </div>
+
+        <!-- Ticker preview -->
+        <div class="ticker-preview" id="ticker-preview" aria-live="polite"></div>
+      </section>
+
+      <!-- ── Loading overlay ──────────────────────────────────── -->
+      <div id="loading-overlay">
+        <div class="loading-card">
+          <div class="spinner"></div>
+          <div class="loading-text">
+            <strong id="loading-stage">Initialising pipeline…</strong><br>
+            <span id="loading-detail">Running parallel agents — fundamentals · momentum · news</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Error banner ─────────────────────────────────────── -->
+      <div id="error-banner">
+        <div class="error-card">
+          <div class="error-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="error-text" id="error-text"></div>
+        </div>
+      </div>
+
+      <!-- ── Results ──────────────────────────────────────────── -->
+      <section id="results-container">
+        <div class="results-meta">
+          <div class="results-meta-text" id="results-meta-text"></div>
+        </div>
+        <div class="results-grid" id="results-grid">
+          <!-- stock cards injected by JS -->
+        </div>
+      </section>
+
+    </main><!-- /page-wrapper -->
+
+    <!-- Site footer (disclaimer lives here only) -->
+    <footer class="site-footer">
+      <div class="footer-disclaimer">
+        <span class="disclaimer-badge">
+          <!-- warning icon -->
+          <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          Disclaimer
+        </span>
+        This is an educational portfolio project. Data has inherent delays and limitations.
+        <strong>Not investment advice.</strong> Always conduct independent due diligence before making financial decisions.
+      </div>
+      <div style="color:var(--text-muted);font-size:10px;">
+        Fin-Vantage Scout · FastAPI · LangGraph · Groq LLaMA · v0.1.0
+      </div>
+    </footer>
+
+  </div><!-- /main-content -->
+
+</div><!-- /app-shell -->
+
+<!-- ════════════════════════════════════════════════════════════
+     APP SCRIPT (inline, single file — no build step needed)
+════════════════════════════════════════════════════════════ -->
+<script src="/static/app.js"></script>
+</body>
+</html>
