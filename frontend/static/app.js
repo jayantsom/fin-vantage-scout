@@ -31,6 +31,83 @@ let currentMode = "manual";
 /** Parsed list of tickers from the text input. */
 let currentTickers = [];
 
+/* ─── Theme Management ─── */
+function initTheme() {
+  const saved = localStorage.getItem("theme");
+  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = saved === "dark" || (!saved && systemPrefersDark);
+  
+  if (isDark) {
+    document.body.classList.remove("light-mode");
+  } else {
+    document.body.classList.add("light-mode");
+  }
+  updateThemeIcon(!isDark);
+}
+
+function toggleTheme() {
+  const isCurrentlyLight = document.body.classList.toggle("light-mode");
+  localStorage.setItem("theme", isCurrentlyLight ? "light" : "dark");
+  updateThemeIcon(isCurrentlyLight);
+}
+
+function updateThemeIcon(isLight) {
+  const icon = document.getElementById("theme-icon");
+  if (!icon) return;
+  if (isLight) {
+    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />`;
+  } else {
+    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />`;
+  }
+}
+
+/* ─── Sidebar Collapse ─── */
+function toggleSidebar() {
+  const shell = document.getElementById("app-shell");
+  shell.classList.toggle("sidebar-collapsed");
+}
+
+/* ─── Reset Application ─── */
+function resetApp() {
+  document.getElementById("ticker-input").value = "";
+  currentTickers = [];
+  updateRunButton();
+  renderTickerPreview();
+  clearError();
+  hideResults();
+  setTab("screener");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ─── Tab Switching ─── */
+function setTab(tabId) {
+  // Update sidebar active buttons
+  document.getElementById("nav-screener")?.classList.toggle("active", tabId === "screener");
+  document.getElementById("nav-methodology")?.classList.toggle("active", tabId === "methodology");
+
+  // Show/hide tab panels
+  document.getElementById("tab-screener").classList.toggle("active", tabId === "screener");
+  document.getElementById("tab-methodology").classList.toggle("active", tabId === "methodology");
+}
+
+/* ─── Metric Documentation Clicking ─── */
+function showMetricDoc(metricId) {
+  setTab("methodology");
+  
+  const targetCard = document.getElementById(`doc-${metricId}`);
+  if (targetCard) {
+    setTimeout(() => {
+      targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      targetCard.classList.add("highlight-pulse");
+      
+      // Remove the highlight class after the pulse animation runs
+      setTimeout(() => {
+        targetCard.classList.remove("highlight-pulse");
+      }, 2000);
+    }, 150);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    2. Health check  — polls /health and updates the dot in the topbar
 ═══════════════════════════════════════════════════════════════ */
@@ -270,7 +347,7 @@ function buildStockCard(item) {
       ${escHtml(synthesis.explanation || "No synthesis available.")}
     </div>`;
 
-  // Fundamental metrics grid (4 cells)
+  // Fundamental metrics grid (4 cells) - Interactive clicks to Methodology
   const cr    = fmtNum(fundamentals.current_ratio,  ".2f");
   const de    = fmtNum(fundamentals.debt_to_equity, ".2f");
   const roe   = fmtPct(fundamentals.roe);
@@ -279,29 +356,29 @@ function buildStockCard(item) {
 
   card.innerHTML += `
     <div class="metrics-grid">
-      <div class="metric-cell">
+      <div class="metric-cell metric-clickable" onclick="showMetricDoc('current-ratio')" title="Click to view definition & methodology">
         <div class="metric-label">Current Ratio</div>
         <div class="metric-value ${numClass(fundamentals.current_ratio)}">${cr}</div>
         <div class="metric-sub">Liquidity</div>
       </div>
-      <div class="metric-cell">
+      <div class="metric-cell metric-clickable" onclick="showMetricDoc('debt-to-equity')" title="Click to view definition & methodology">
         <div class="metric-label">Debt / Equity</div>
         <div class="metric-value ${fundamentals.debt_to_equity !== null && fundamentals.debt_to_equity > 200 ? "negative" : ""}">${de}</div>
         <div class="metric-sub">Leverage</div>
       </div>
-      <div class="metric-cell">
+      <div class="metric-cell metric-clickable" onclick="showMetricDoc('roe')" title="Click to view definition & methodology">
         <div class="metric-label">ROE</div>
         <div class="metric-value ${fundamentals.roe !== null ? (fundamentals.roe > 0 ? "positive" : "negative") : "na"}">${roe}</div>
         <div class="metric-sub">Profitability</div>
       </div>
-      <div class="metric-cell">
+      <div class="metric-cell metric-clickable" onclick="showMetricDoc('gross-margin')" title="Click to view definition & methodology">
         <div class="metric-label">Gross Margin</div>
         <div class="metric-value">${gm}</div>
         <div class="metric-sub">${escHtml(gmTrend)}</div>
       </div>
     </div>`;
 
-  // Footer row: news sentiment (left) + momentum bars (right)
+  // Footer row: news sentiment (left) + momentum bars (right) - Interactive clicks to Methodology
   const r6m   = momentum.return_6m;
   const r12m  = momentum.return_12m;
   const pct6  = momentum.percentile_rank_6m;
@@ -314,19 +391,22 @@ function buildStockCard(item) {
     <div class="card-footer-row">
 
       <!-- News sentiment -->
-      <div class="footer-section">
+      <div class="footer-section metric-clickable" onclick="showMetricDoc('news')" title="Click to view sentiment logic">
         <div class="footer-section-label">News Sentiment</div>
-        <div class="sentiment-chip sentiment-${sentiment}">
+        <div class="sentiment-chip sentiment-${sentiment} metric-clickable-badge">
           ${sentimentDot(sentiment)} ${escHtml(sentiment)}
         </div>
-        <div class="sentiment-justification">
+        <div class="sentiment-justification" style="margin-top:6px;">
           ${escHtml(news.justification || "")}
         </div>
-        ${buildHeadlinesToggle(news.headlines, hlId)}
+        <!-- Stop propagation on headline toggle click so it doesn't navigate to methodology -->
+        <div onclick="event.stopPropagation();">
+          ${buildHeadlinesToggle(news.headlines, hlId)}
+        </div>
       </div>
 
       <!-- Momentum -->
-      <div class="footer-section">
+      <div class="footer-section metric-clickable" onclick="showMetricDoc('momentum')" title="Click to view momentum ranking logic">
         <div class="footer-section-label">Momentum (vs. Peers)</div>
         <div class="momentum-bars">
           ${buildMomentumBar("6M", r6m, pct6)}
@@ -513,6 +593,9 @@ function scrollToResults() {
 ═══════════════════════════════════════════════════════════════ */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize theme (Light/Dark mode)
+  initTheme();
+
   // Check backend health immediately, then every 30 seconds
   checkHealth();
   setInterval(checkHealth, 30_000);

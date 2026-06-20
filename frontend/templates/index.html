@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fin-Vantage Scout — Equity Intelligence Platform</title>
-  <meta name="description" content="Multi-agent equity screening platform — fundamentals, momentum, and news sentiment synthesised into structured investment intelligence." />
+  <meta name="description"
+    content="Multi-agent equity screening platform — fundamentals, momentum, and news sentiment synthesised into structured investment intelligence." />
 
   <!-- Tailwind CSS Play CDN (zero install — one script tag) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,327 +26,540 @@
 </head>
 
 <body>
-<div class="app-shell">
+  <div class="app-shell" id="app-shell">
 
-  <!-- ════════════════════════════════════════════════════════════
+    <!-- ════════════════════════════════════════════════════════════
        SIDEBAR
   ════════════════════════════════════════════════════════════ -->
-  <aside class="sidebar">
+    <aside class="sidebar">
 
-    <!-- Logo -->
-    <div class="sidebar-logo">
-      <img src="/static/img/icon.jpg" alt="Fin-Vantage Scout logo" />
-      <div>
-        <div class="sidebar-logo-text">Fin-Vantage Scout</div>
-        <div class="sidebar-logo-sub">Equity Intelligence</div>
-      </div>
-    </div>
-
-    <!-- Navigation -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Analysis</div>
-
-      <button class="sidebar-nav-item active" onclick="scrollToPanel()">
-        <!-- chart-bar icon -->
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-        </svg>
-        Screener
-        <span class="sidebar-pill pill-live">Live</span>
-      </button>
-
-      <button class="sidebar-nav-item" onclick="scrollToResults()">
-        <!-- document icon -->
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        Results
-      </button>
-    </div>
-
-    <div class="sidebar-divider"></div>
-
-    <!-- Data sources -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Data Sources</div>
-
-      <div class="sidebar-nav-item" style="cursor:default;">
-        <!-- database icon -->
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 4 1.79 4 8"/>
-        </svg>
-        Yahoo Finance
-        <span class="sidebar-pill pill-free">Free</span>
-      </div>
-
-      <div class="sidebar-nav-item" style="cursor:default;">
-        <!-- newspaper icon -->
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-        </svg>
-        DuckDuckGo News
-        <span class="sidebar-pill pill-free">Free</span>
-      </div>
-
-      <div class="sidebar-nav-item" style="cursor:default;">
-        <!-- cpu icon -->
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
-        </svg>
-        Groq LLaMA
-        <span class="sidebar-pill pill-free">Free</span>
-      </div>
-    </div>
-
-    <div class="sidebar-divider"></div>
-
-    <!-- Pipeline -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Agent Pipeline</div>
-      <div style="padding: 4px 6px; font-size:11px; color:var(--text-muted); line-height:1.8;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-teal-dim);border:1px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-teal);flex-shrink:0;">1a</span>
-          Fundamentals Agent
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-teal-dim);border:1px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-teal);flex-shrink:0;">1b</span>
-          Momentum Agent
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-teal-dim);border:1px solid var(--brand-teal);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-teal);flex-shrink:0;">1c</span>
-          News Sentiment Agent
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--brand-gold-dim);border:1px solid var(--brand-gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--brand-gold);flex-shrink:0;">2</span>
-          Synthesis Agent
+      <!-- Logo (Static, clicking refreshes/resets page) -->
+      <div class="sidebar-logo" onclick="resetApp()">
+        <img src="/static/img/icon.jpg" alt="Fin-Vantage Scout logo" />
+        <div>
+          <div class="sidebar-logo-text">Fin-Vantage Scout</div>
+          <div class="sidebar-logo-sub">Equity Intelligence</div>
         </div>
       </div>
-    </div>
 
-    <div class="sidebar-divider"></div>
+      <!-- Scrollable content area -->
+      <div class="sidebar-content">
+        <!-- Navigation -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Analysis</div>
 
-    <!-- Limitations -->
-    <div style="padding: 0 14px 12px;">
-      <div class="sidebar-info-block">
-        <div class="info-title">
-          <!-- warning icon -->
-          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          <button id="nav-screener" class="sidebar-nav-item active" onclick="setTab('screener')">
+            <!-- chart-bar icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span class="nav-text">Screener</span>
+            <span class="sidebar-pill pill-live">Live</span>
+          </button>
+
+          <button id="nav-methodology" class="sidebar-nav-item" onclick="setTab('methodology')">
+            <!-- document/academic icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span class="nav-text">Methodology</span>
+          </button>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Data sources (Clickable links to external documentation/sites) -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Data Sources</div>
+
+          <a href="https://finance.yahoo.com" target="_blank" rel="noopener noreferrer" class="sidebar-nav-item">
+            <!-- database icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 4 1.79 4 8" />
+            </svg>
+            <span class="nav-text">Yahoo Finance</span>
+            <span class="sidebar-pill pill-free">Free</span>
+          </a>
+
+          <a href="https://duckduckgo.com/news" target="_blank" rel="noopener noreferrer" class="sidebar-nav-item">
+            <!-- newspaper icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+            <span class="nav-text">DuckDuckGo News</span>
+            <span class="sidebar-pill pill-free">Free</span>
+          </a>
+
+          <a href="https://groq.com" target="_blank" rel="noopener noreferrer" class="sidebar-nav-item">
+            <!-- cpu icon -->
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+            </svg>
+            <span class="nav-text">Groq LLaMA</span>
+            <span class="sidebar-pill pill-free">Free</span>
+          </a>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- AI & Systems Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">AI & Systems</div>
+
+          <div class="sidebar-nav-item"
+            style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
+            <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Models & Inference</span>
+            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">Groq cloud
+              Heavy/Light LLaMA · Local Ollama fallback (`llama3.2:3b`)</span>
+          </div>
+
+          <div class="sidebar-nav-item"
+            style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
+            <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Data Services</span>
+            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">yfinance API
+              (Market Stats) · DuckDuckGo parsing (News snap)</span>
+          </div>
+
+          <div class="sidebar-nav-item"
+            style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
+            <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Local Caching</span>
+            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">SQLite storage
+              (`cache.db`) · 1h price history TTL · 24h holdings TTL</span>
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Tech Stack -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Tech Stack</div>
+          <div class="sidebar-stack-tags"
+            style="padding: 4px 6px 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+            <span class="stack-tag" style="text-align:center;">FastAPI</span>
+            <span class="stack-tag" style="text-align:center;">LangGraph</span>
+            <span class="stack-tag" style="text-align:center;">yfinance</span>
+            <span class="stack-tag" style="text-align:center;">SQLite</span>
+            <span class="stack-tag" style="text-align:center; grid-column: span 2;">Python 3.11</span>
+          </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Limitations -->
+        <div style="padding: 0 14px 12px;">
+          <div class="sidebar-info-block">
+            <div class="info-title">
+              <!-- warning icon -->
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              System Constraints
+            </div>
+            <ul style="list-style:none;padding:0;margin:0;">
+              <li style="padding:2px 0;">· Delayed quotes (15+ min via Yahoo Finance)</li>
+              <li style="padding:2px 0;">· News snapshots (not a tick-by-tick feed)</li>
+              <li style="padding:2px 0;">· Ratings are heuristic and educational</li>
+              <li style="padding:2px 0;">· Static point-in-time balance sheets</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Collapsible Sidebar Toggle Button -->
+        <button class="sidebar-nav-item sidebar-collapse-btn" onclick="toggleSidebar()"
+          aria-label="Toggle sidebar panel collapse state">
+          <svg class="collapse-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            style="transition: transform var(--t-normal);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
           </svg>
-          Known Limitations
+          <span class="nav-text">Collapse Sidebar</span>
+        </button>
+
+        <!-- Sidebar footer -->
+        <div class="sidebar-footer">
+          Portfolio / educational project.<br>
+          Not for production use.
         </div>
-        <ul style="list-style:none;padding:0;margin:0;">
-          <li style="padding:1px 0;">· 15-min data delay (Yahoo Finance)</li>
-          <li style="padding:1px 0;">· No real-time news feed</li>
-          <li style="padding:1px 0;">· LLM ratings are heuristic</li>
-          <li style="padding:1px 0;">· Single snapshot fundamentals</li>
-        </ul>
       </div>
-    </div>
 
-    <!-- Tech stack tags -->
-    <div class="sidebar-stack-tags">
-      <span class="stack-tag">FastAPI</span>
-      <span class="stack-tag">LangGraph</span>
-      <span class="stack-tag">Groq</span>
-      <span class="stack-tag">yfinance</span>
-      <span class="stack-tag">Python 3.11</span>
-    </div>
-
-    <!-- Sidebar footer -->
-    <div class="sidebar-footer">
-      Portfolio / educational project.<br>
-      Not for production use.
-    </div>
-
-  </aside><!-- /sidebar -->
+    </aside><!-- /sidebar -->
 
 
-  <!-- ════════════════════════════════════════════════════════════
+    <!-- ════════════════════════════════════════════════════════════
        MAIN CONTENT
   ════════════════════════════════════════════════════════════ -->
-  <div class="main-content">
+    <div class="main-content">
 
-    <!-- Top bar -->
-    <header class="topbar">
-      <div>
-        <div class="topbar-title">Equity Screening Dashboard</div>
-        <div class="topbar-subtitle">Multi-agent analysis · LangGraph fan-out pipeline</div>
-      </div>
-      <div class="health-indicator">
-        <div class="health-dot" id="health-dot"></div>
-        <span id="health-label">Checking…</span>
-      </div>
-    </header>
+      <!-- Top bar -->
+      <header class="topbar">
+        <div>
+          <div class="topbar-title"
+            style="font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); line-height: 1.25;">
+            Institutional Equity Intelligence Terminal</div>
+          <div class="topbar-subtitle" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Automated
+            Multi-Agent Consensus · LangGraph Fan-Out Architecture</div>
+        </div>
 
-    <!-- Page content -->
-    <main class="page-wrapper" id="top">
-
-      <!-- ── Control panel ────────────────────────────────────── -->
-      <section class="control-panel" id="control-panel">
-        <div class="panel-heading">Configure Analysis Run</div>
-
-        <!-- Mode selector -->
-        <div class="mode-toggle" role="group" aria-label="Analysis mode">
-          <button
-            class="mode-btn active"
-            id="btn-manual"
-            onclick="setMode('manual')"
-            aria-pressed="true"
-          >
-            <!-- pencil icon -->
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+        <div class="topbar-actions" style="display:flex;align-items:center;gap:16px;">
+          <!-- Theme Toggle Button -->
+          <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()"
+            aria-label="Toggle light/dark theme">
+            <svg id="theme-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <!-- Moon SVG path by default -->
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
             </svg>
-            Manual — Enter tickers
           </button>
-          <button
-            class="mode-btn"
-            id="btn-auto"
-            onclick="setMode('auto_screen')"
-            aria-pressed="false"
-          >
-            <!-- magnifying-glass icon -->
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+          <div class="health-indicator">
+            <div class="health-dot" id="health-dot"></div>
+            <span id="health-label">Checking…</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page content -->
+      <main class="page-wrapper" id="top">
+
+        <!-- ==================== SCREENER TAB ==================== -->
+        <div id="tab-screener" class="tab-pane active">
+
+          <!-- ── Horizontal Infographic Flow ── -->
+          <div class="pipeline-infographic">
+            <div class="pipeline-step">
+              <div class="pipeline-step-node">1</div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">Universe Input</span>
+                <span class="pipeline-step-desc">Manual input or auto FFTY ETF</span>
+              </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step">
+              <div class="pipeline-step-node">2</div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">Fundamentals Agent</span>
+                <span class="pipeline-step-desc">Extracts yfinance metrics</span>
+              </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step">
+              <div class="pipeline-step-node">3</div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">Momentum Agent</span>
+                <span class="pipeline-step-desc">Computes relative return rank</span>
+              </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step">
+              <div class="pipeline-step-node">4</div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">News Sentiment</span>
+                <span class="pipeline-step-desc">LLM processing of search results</span>
+              </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-step synthesis-step">
+              <div class="pipeline-step-node">5</div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">Synthesis Agent</span>
+                <span class="pipeline-step-desc">Orchestrates overall consensus</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Control panel ────────────────────────────────────── -->
+          <section class="control-panel" id="control-panel">
+            <div class="panel-heading">Configure Analysis Run</div>
+
+            <!-- Mode selector -->
+            <div class="mode-toggle" role="group" aria-label="Analysis mode">
+              <button class="mode-btn active" id="btn-manual" onclick="setMode('manual')" aria-pressed="true">
+                <!-- pencil icon -->
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Manual — Enter tickers
+              </button>
+              <button class="mode-btn" id="btn-auto" onclick="setMode('auto_screen')" aria-pressed="false">
+                <!-- magnifying-glass icon -->
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Auto-Screen — Top 10 FFTY
+              </button>
+            </div>
+
+            <!-- Manual mode: ticker input -->
+            <div id="manual-input-row" class="ticker-input-wrap">
+              <input type="text" id="ticker-input" class="ticker-input" placeholder="e.g. AAPL, NVDA, MU, MSFT"
+                autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="onTickerInput()"
+                onkeydown="onTickerKeydown(event)" aria-label="Comma-separated stock tickers" />
+              <button class="run-btn" id="run-btn" onclick="runAnalysis()" disabled aria-label="Run analysis">
+                <!-- play icon -->
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Run Analysis
+              </button>
+            </div>
+
+            <!-- Auto-screen mode hint -->
+            <div id="auto-screen-row" style="display:none;">
+              <div class="auto-screen-hint" style="display:block;">
+                Fetches current FFTY ETF holdings, runs a momentum pre-screen, and analyses the top 10 candidates.
+                This may take 1–2 minutes.
+              </div>
+              <div style="margin-top:10px;">
+                <button class="run-btn" id="run-btn-auto" onclick="runAnalysis()" aria-label="Run auto-screen analysis">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Run Auto-Screen
+                </button>
+              </div>
+            </div>
+
+            <!-- Ticker preview -->
+            <div class="ticker-preview" id="ticker-preview" aria-live="polite"></div>
+          </section>
+
+          <!-- ── Loading overlay ──────────────────────────────────── -->
+          <div id="loading-overlay">
+            <div class="loading-card">
+              <div class="spinner"></div>
+              <div class="loading-text">
+                <strong id="loading-stage">Initialising pipeline…</strong><br>
+                <span id="loading-detail">Running parallel agents — fundamentals · momentum · news</span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Error banner ─────────────────────────────────────── -->
+          <div id="error-banner">
+            <div class="error-card">
+              <div class="error-icon">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="error-text" id="error-text"></div>
+            </div>
+          </div>
+
+          <!-- ── Results ──────────────────────────────────────────── -->
+          <section id="results-container">
+            <div class="results-meta">
+              <div class="results-meta-text" id="results-meta-text"></div>
+            </div>
+            <div class="results-grid" id="results-grid">
+              <!-- stock cards injected by JS -->
+            </div>
+          </section>
+
+        </div><!-- /tab-screener -->
+
+
+        <!-- ==================== METHODOLOGY TAB ==================== -->
+        <div id="tab-methodology" class="tab-pane">
+
+          <div class="methodology-header">
+            <div class="methodology-title">System Methodology & Metric Definitions</div>
+            <div class="methodology-desc">
+              Explore the quantitative calculation logics, underlying data structures, and the agent consensus
+              architecture that drive Fin-Vantage Scout.
+            </div>
+          </div>
+
+          <div class="methodology-grid">
+            <!-- Current Ratio -->
+            <div class="methodology-card" id="doc-current-ratio">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Current Ratio (Liquidity)
+              </div>
+              <div class="methodology-card-formula">Current Assets / Current Liabilities</div>
+              <div class="methodology-card-text">
+                <p>The Current Ratio measures a company's ability to cover its short-term obligations (due within one
+                  year) with its short-term assets.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>&ge; 1.5 (Attractive)</strong>: Indicates a solid short-term liquidity buffer.</li>
+                  <li><strong>1.0 to 1.5 (Neutral)</strong>: Standard baseline liquidity profile.</li>
+                  <li><strong>&lt; 1.0 (Caution)</strong>: Potential liquidity stress under financial distress.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance</span>
+            </div>
+
+            <!-- Debt / Equity -->
+            <div class="methodology-card" id="doc-debt-to-equity">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Debt to Equity (Leverage)
+              </div>
+              <div class="methodology-card-formula">Total Debt / Total Shareholder Equity</div>
+              <div class="methodology-card-text">
+                <p>This ratio measures financial leverage. It reveals the proportion of equity and debt the company uses
+                  to finance its assets, indicating long-term solvency.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>&lt; 100%</strong>: Conservative capital structure with low risk.</li>
+                  <li><strong>100% to 200%</strong>: Moderate leverage typical in stable sectors.</li>
+                  <li><strong>&gt; 200% (Caution)</strong>: Aggressive debt levels, representing elevated risk.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance</span>
+            </div>
+
+            <!-- ROE -->
+            <div class="methodology-card" id="doc-roe">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16v0" />
+                </svg>
+                Return on Equity (ROE)
+              </div>
+              <div class="methodology-card-formula">Net Income / Shareholder Equity</div>
+              <div class="methodology-card-text">
+                <p>Return on Equity measures profitability efficiency by showing how much profit a company generates
+                  with the capital invested by its shareholders.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>&gt; 15% (Attractive)</strong>: High capital efficiency and strong returns.</li>
+                  <li><strong>0% to 15%</strong>: Standard profitability profile.</li>
+                  <li><strong>&lt; 0% (Caution)</strong>: Unprofitable operations eroding shareholder value.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance</span>
+            </div>
+
+            <!-- Gross Margin -->
+            <div class="methodology-card" id="doc-gross-margin">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+                Gross Margin (Pricing Power)
+              </div>
+              <div class="methodology-card-formula">Gross Profit / Revenue</div>
+              <div class="methodology-card-text">
+                <p>Represents the percentage of revenue retained after incurring direct manufacturing/delivery costs,
+                  signaling competitive moat and pricing power.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>&gt; 50% (Strong)</strong>: Exceptional pricing power and competitive moat.</li>
+                  <li><strong>25% to 50% (Moderate)</strong>: Balanced pricing spreads.</li>
+                  <li><strong>&lt; 25% (Thin)</strong>: Low competitive buffer or commodity dynamics.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance</span>
+            </div>
+
+            <!-- Momentum Relative Strength -->
+            <div class="methodology-card" id="doc-momentum">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Momentum Percentile Rank
+              </div>
+              <div class="methodology-card-formula">Percentile Rank of Returns (6M & 12M) vs Peer Group</div>
+              <div class="methodology-card-text">
+                <p>Measures price returns over 6-month and 12-month periods, ranking them vs. the peer universe (inputs
+                  + fallback index tickers) from 0 to 100.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>&ge; 70th Percentile</strong>: Favorable market leadership and momentum.</li>
+                  <li><strong>35th to 70th Percentile</strong>: Standard mid-pack performer.</li>
+                  <li><strong>&lt; 35th Percentile</strong>: Market laggard showing weak demand.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-langgraph">LangGraph Engine</span>
+            </div>
+
+            <!-- News Sentiment -->
+            <div class="methodology-card" id="doc-news">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                News Sentiment (LLM Engine)
+              </div>
+              <div class="methodology-card-formula">DuckDuckGo Search &rarr; LLaMA Classifier</div>
+              <div class="methodology-card-text">
+                <p>Fetches news snapshots via DuckDuckGo, feeds them to a lightweight LLM (`get_llm("light")`), and
+                  summarizes the general press sentiment consensus.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>Positive</strong>: Favorable catalysts (earnings beat, new product).</li>
+                  <li><strong>Neutral</strong>: Balanced coverage or low-impact news.</li>
+                  <li><strong>Negative</strong>: Corporate issues (downgrades, legal risks).</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-langgraph">LangGraph Engine</span>
+            </div>
+          </div>
+
+        </div><!-- /tab-methodology -->
+
+      </main><!-- /page-wrapper -->
+
+      <!-- Site footer (disclaimer lives here only) -->
+      <footer class="site-footer"
+        style="flex-direction: column; text-align: center; gap: 8px; justify-content: center; padding: 20px 28px;">
+        <div class="footer-disclaimer"
+          style="flex-direction: column; gap: 4px; justify-content: center; align-items: center;">
+          <span class="disclaimer-badge">
+            <!-- warning icon -->
+            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            Auto-Screen — Top 10 FFTY
-          </button>
-        </div>
-
-        <!-- Manual mode: ticker input -->
-        <div id="manual-input-row" class="ticker-input-wrap">
-          <input
-            type="text"
-            id="ticker-input"
-            class="ticker-input"
-            placeholder="e.g. AAPL, NVDA, MU, MSFT"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            oninput="onTickerInput()"
-            onkeydown="onTickerKeydown(event)"
-            aria-label="Comma-separated stock tickers"
-          />
-          <button
-            class="run-btn"
-            id="run-btn"
-            onclick="runAnalysis()"
-            disabled
-            aria-label="Run analysis"
-          >
-            <!-- play icon -->
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Run Analysis
-          </button>
-        </div>
-
-        <!-- Auto-screen mode hint -->
-        <div id="auto-screen-row" style="display:none;">
-          <div class="auto-screen-hint" style="display:block;">
-            Fetches current FFTY ETF holdings, runs a momentum pre-screen, and analyses the top 10 candidates.
-            This may take 1–2 minutes.
+            Disclaimer
+          </span>
+          <div style="max-width: 700px; margin-top: 4px; line-height: 1.5;">
+            This is an educational portfolio project. Data has inherent delays and limitations.
+            <strong>Not investment advice.</strong> Always conduct independent due diligence before making financial
+            decisions.
           </div>
-          <div style="margin-top:10px;">
-            <button
-              class="run-btn"
-              id="run-btn-auto"
-              onclick="runAnalysis()"
-              aria-label="Run auto-screen analysis"
-            >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Run Auto-Screen
-            </button>
+          <div style="font-size: 11px; margin-top: 6px; color: var(--text-secondary);">
+            For queries, contact Jayant Som – <a href="mailto:jayant4195@gmail.com"
+              style="color: var(--brand-teal); text-decoration: none;">jayant4195@gmail.com</a>
           </div>
         </div>
+      </footer>
 
-        <!-- Ticker preview -->
-        <div class="ticker-preview" id="ticker-preview" aria-live="polite"></div>
-      </section>
+    </div><!-- /main-content -->
 
-      <!-- ── Loading overlay ──────────────────────────────────── -->
-      <div id="loading-overlay">
-        <div class="loading-card">
-          <div class="spinner"></div>
-          <div class="loading-text">
-            <strong id="loading-stage">Initialising pipeline…</strong><br>
-            <span id="loading-detail">Running parallel agents — fundamentals · momentum · news</span>
-          </div>
-          <div class="progress-bar-wrap">
-            <div class="progress-bar-fill"></div>
-          </div>
-        </div>
-      </div>
+  </div><!-- /app-shell -->
 
-      <!-- ── Error banner ─────────────────────────────────────── -->
-      <div id="error-banner">
-        <div class="error-card">
-          <div class="error-icon">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div class="error-text" id="error-text"></div>
-        </div>
-      </div>
-
-      <!-- ── Results ──────────────────────────────────────────── -->
-      <section id="results-container">
-        <div class="results-meta">
-          <div class="results-meta-text" id="results-meta-text"></div>
-        </div>
-        <div class="results-grid" id="results-grid">
-          <!-- stock cards injected by JS -->
-        </div>
-      </section>
-
-    </main><!-- /page-wrapper -->
-
-    <!-- Site footer (disclaimer lives here only) -->
-    <footer class="site-footer">
-      <div class="footer-disclaimer">
-        <span class="disclaimer-badge">
-          <!-- warning icon -->
-          <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          Disclaimer
-        </span>
-        This is an educational portfolio project. Data has inherent delays and limitations.
-        <strong>Not investment advice.</strong> Always conduct independent due diligence before making financial decisions.
-      </div>
-      <div style="color:var(--text-muted);font-size:10px;">
-        Fin-Vantage Scout · FastAPI · LangGraph · Groq LLaMA · v0.1.0
-      </div>
-    </footer>
-
-  </div><!-- /main-content -->
-
-</div><!-- /app-shell -->
-
-<!-- ════════════════════════════════════════════════════════════
+  <!-- ════════════════════════════════════════════════════════════
      APP SCRIPT (inline, single file — no build step needed)
-════════════════════════════════════════════════════════════ -->
-<script src="/static/app.js"></script>
+ ════════════════════════════════════════════════════════════ -->
+  <script src="/static/app.js"></script>
 </body>
+
 </html>

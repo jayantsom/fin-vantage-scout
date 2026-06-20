@@ -68,6 +68,44 @@
   --shadow-glow-teal: 0 0 20px rgba(0, 180, 216, 0.15);
 }
 
+/* ─── Light Mode Theme ───────────────────────────────────────────── */
+body.light-mode {
+  --bg-base:        #f1f5f9;
+  --bg-surface:     #ffffff;
+  --bg-card:        rgba(255, 255, 255, 0.85);
+  --bg-sidebar:     #f8fafc;
+  --bg-input:       rgba(0, 0, 0, 0.04);
+  --bg-hover:       rgba(0, 0, 0, 0.03);
+
+  /* Brand palette updates for light contrast */
+  --brand-navy:     #cbd5e1;
+  --brand-teal-dim: rgba(0, 180, 216, 0.08);
+  --brand-gold-dim: rgba(240, 192, 64, 0.12);
+
+  /* Text */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #64748b;
+
+  /* Borders */
+  --border-subtle:  rgba(0, 0, 0, 0.06);
+  --border-dim:     rgba(0, 0, 0, 0.10);
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.05);
+  --shadow-glow-teal: 0 0 16px rgba(0, 180, 216, 0.08);
+}
+
+body.light-mode .topbar {
+  background: rgba(241, 245, 249, 0.92);
+}
+
+body.light-mode {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,180,216,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(203,213,225,0.15) 0%, transparent 60%);
+}
+
 /* ─── Reset & Base ──────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -84,6 +122,7 @@ body {
     radial-gradient(ellipse 60% 40% at 90% 110%, rgba(26,58,92,0.12) 0%, transparent 60%);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color var(--t-normal), color var(--t-normal);
 }
 
 /* ─── Custom Scrollbar ──────────────────────────────────────────── */
@@ -96,6 +135,7 @@ body {
 .app-shell {
   display: flex;
   min-height: 100vh;
+  transition: padding-left var(--t-normal);
 }
 
 /* ─── Sidebar ────────────────────────────────────────────────────── */
@@ -109,8 +149,8 @@ body {
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
   z-index: 20;
+  transition: width var(--t-normal), background-color var(--t-normal);
 }
 
 .sidebar-logo {
@@ -809,6 +849,267 @@ body {
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* ─── Static Logo & Scrollable Content ───────────────────────────── */
+.sidebar-logo {
+  cursor: pointer;
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+}
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Sidebar Collapse State Styles ───────────────────────────────── */
+.sidebar-collapsed .sidebar {
+  width: 64px;
+}
+.sidebar-collapsed .sidebar-logo-text,
+.sidebar-collapsed .sidebar-logo-sub,
+.sidebar-collapsed .nav-text,
+.sidebar-collapsed .sidebar-pill,
+.sidebar-collapsed .sidebar-section-title,
+.sidebar-collapsed .sidebar-divider,
+.sidebar-collapsed .sidebar-info-block,
+.sidebar-collapsed .sidebar-stack-tags,
+.sidebar-collapsed .sidebar-footer {
+  display: none !important;
+}
+.sidebar-collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: 10px;
+}
+.sidebar-collapsed .sidebar-nav-item svg {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+.sidebar-collapsed .sidebar-logo {
+  justify-content: center;
+  padding: 16px 0;
+}
+.sidebar-collapsed .sidebar-logo img {
+  width: 32px;
+  height: 32px;
+}
+.sidebar-collapse-btn {
+  margin-top: auto;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+}
+.sidebar-collapsed .collapse-icon {
+  transform: rotate(180deg);
+}
+
+/* ─── Theme Toggle Button ────────────────────────────────────────── */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-dim);
+}
+.theme-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ─── Horizontal Infographic Flow ────────────────────────────────── */
+.pipeline-infographic {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+}
+.pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.pipeline-step-node {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--brand-teal);
+  transition: all var(--t-normal);
+  flex-shrink: 0;
+}
+.pipeline-step:hover .pipeline-step-node {
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 10px var(--brand-teal-dim);
+  transform: scale(1.05);
+}
+.pipeline-step-content {
+  display: flex;
+  flex-direction: column;
+}
+.pipeline-step-title {
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--text-primary);
+}
+.pipeline-step-desc {
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+.pipeline-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 300;
+}
+.pipeline-step.synthesis-step .pipeline-step-node {
+  color: var(--brand-gold);
+  border-color: rgba(240, 192, 64, 0.3);
+}
+.pipeline-step.synthesis-step:hover .pipeline-step-node {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 10px var(--brand-gold-dim);
+}
+
+/* ─── Tab panes ──────────────────────────────────────────────────── */
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: block;
+}
+
+/* ─── Methodology card styles ────────────────────────────────────── */
+.methodology-header {
+  margin-bottom: 24px;
+}
+.methodology-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.methodology-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 800px;
+}
+.methodology-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+.methodology-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+  transition: all var(--t-normal);
+  position: relative;
+  overflow: hidden;
+}
+.methodology-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-teal);
+}
+.methodology-card.highlight-pulse {
+  animation: card-highlight-pulse 2s ease-in-out;
+  border-color: var(--brand-teal) !important;
+}
+@keyframes card-highlight-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 180, 216, 0.4); border-color: var(--brand-teal); }
+  50% { box-shadow: 0 0 20px 6px rgba(0, 180, 216, 0.25); border-color: var(--brand-teal); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 180, 216, 0); }
+}
+.methodology-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.methodology-card-title svg {
+  width: 16px;
+  height: 16px;
+  color: var(--brand-teal);
+  flex-shrink: 0;
+}
+.methodology-card-formula {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  text-align: center;
+}
+.methodology-card-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.methodology-card-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+.badge-tech-fastapi { background: rgba(0, 150, 136, 0.1); color: rgb(0, 150, 136); }
+.badge-tech-langgraph { background: rgba(103, 58, 183, 0.1); color: rgb(103, 58, 183); }
+.badge-tech-yfinance { background: rgba(33, 150, 243, 0.1); color: rgb(33, 150, 243); }
+
+/* ─── Clickable Metrics in Stock Cards ───────────────────────────── */
+.metric-clickable {
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.metric-clickable:hover {
+  background: var(--bg-hover);
+}
+.metric-clickable-badge {
+  cursor: pointer;
+  transition: transform var(--t-fast);
+}
+.metric-clickable-badge:hover {
+  transform: translateY(-1px);
 }
 
 /* ─── Misc utilities ─────────────────────────────────────────────── */
