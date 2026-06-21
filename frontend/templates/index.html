@@ -22,7 +22,7 @@
   </script>
 
   <!-- Custom design-system CSS -->
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v=2" />
 </head>
 
 <body>
@@ -114,22 +114,22 @@
           <div class="sidebar-nav-item"
             style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
             <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Models & Inference</span>
-            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">Groq cloud
-              Heavy/Light LLaMA · Local Ollama fallback (`llama3.2:3b`)</span>
+            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">· Groq cloud
+              Heavy/Light LLaMA<br> · Local Ollama fallback (`llama3.2:3b`)</span>
           </div>
 
           <div class="sidebar-nav-item"
             style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
             <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Data Services</span>
-            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">yfinance API
-              (Market Stats) · DuckDuckGo parsing (News snap)</span>
+            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">· yfinance API
+              (Market Stats)<br> · DuckDuckGo parsing (News snap)</span>
           </div>
 
           <div class="sidebar-nav-item"
             style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
             <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Local Caching</span>
-            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">SQLite storage
-              (`cache.db`) · 1h price history TTL · 24h holdings TTL</span>
+            <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">· SQLite storage
+              (`cache.db`)<br> · 1h price history TTL<br> · 24h holdings TTL</span>
           </div>
         </div>
 
@@ -140,8 +140,8 @@
           <div class="sidebar-section-title">Tech Stack</div>
           <div class="sidebar-stack-tags"
             style="padding: 4px 6px 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
-            <span class="stack-tag" style="text-align:center;">FastAPI</span>
             <span class="stack-tag" style="text-align:center;">LangGraph</span>
+            <span class="stack-tag" style="text-align:center;">FastAPI</span>
             <span class="stack-tag" style="text-align:center;">yfinance</span>
             <span class="stack-tag" style="text-align:center;">SQLite</span>
             <span class="stack-tag" style="text-align:center; grid-column: span 2;">Python 3.11</span>
@@ -162,9 +162,9 @@
               System Constraints
             </div>
             <ul style="list-style:none;padding:0;margin:0;">
-              <li style="padding:2px 0;">· Delayed quotes (15+ min via Yahoo Finance)</li>
-              <li style="padding:2px 0;">· News snapshots (not a tick-by-tick feed)</li>
-              <li style="padding:2px 0;">· Ratings are heuristic and educational</li>
+              <li style="padding:2px 0;">· Delayed quotes<br> (15+ min via Yahoo Finance)</li>
+              <li style="padding:2px 0;">· News snapshots<br>(not a tick-by-tick feed)</li>
+              <li style="padding:2px 0;">· Ratings are heuristic & educational</li>
               <li style="padding:2px 0;">· Static point-in-time balance sheets</li>
             </ul>
           </div>
@@ -182,7 +182,6 @@
 
         <!-- Sidebar footer -->
         <div class="sidebar-footer">
-          Portfolio / educational project.<br>
           Not for production use.
         </div>
       </div>
@@ -200,9 +199,9 @@
         <div>
           <div class="topbar-title"
             style="font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); line-height: 1.25;">
-            Institutional Equity Intelligence Terminal</div>
-          <div class="topbar-subtitle" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Automated
-            Multi-Agent Consensus · LangGraph Fan-Out Architecture</div>
+            Fin-Vantage Scout: Equity Intelligence Terminal</div>
+          <div class="topbar-subtitle" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">
+            Automated Multi-Agent Consensus · LangGraph Fan-Out Architecture</div>
         </div>
 
         <div class="topbar-actions" style="display:flex;align-items:center;gap:16px;">
@@ -541,13 +540,13 @@
             Disclaimer
           </span>
           <div style="max-width: 700px; margin-top: 4px; line-height: 1.5;">
-            This is an educational portfolio project. Data has inherent delays and limitations.
-            <strong>Not investment advice.</strong> Always conduct independent due diligence before making financial
+            This is an educational portfolio project. Not investment advice.<br>
+            Data has inherent delays and limitations. Always conduct independent due diligence before making financial
             decisions.
           </div>
           <div style="font-size: 11px; margin-top: 6px; color: var(--text-secondary);">
-            For queries, contact Jayant Som – <a href="mailto:jayant4195@gmail.com"
-              style="color: var(--brand-teal); text-decoration: none;">jayant4195@gmail.com</a>
+            <strong>For queries, contact Jayant Som – <a href="mailto:jayant4195@gmail.com"
+                style="color: var(--brand-teal); text-decoration: none;">jayant4195@gmail.com</a></strong>
           </div>
         </div>
       </footer>
