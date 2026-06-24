@@ -39,6 +39,21 @@ PRICE_CACHE_TTL_HOURS: int = 1      # yfinance price history
 HOLDINGS_CACHE_TTL_HOURS: int = 24  # FFTY ETF holdings list
 
 # ---------------------------------------------------------------------------
+# Alpha Vantage (secondary data source)
+# ---------------------------------------------------------------------------
+
+# Free-tier key — set in .env.  If unset, Alpha Vantage calls are silently
+# skipped (the fallback logic treats None as "data unavailable").
+ALPHA_VANTAGE_API_KEY: str | None = os.getenv("ALPHA_VANTAGE_API_KEY")
+
+# Hard cap on how many tickers can be analysed per /analyze request when
+# Alpha Vantage is enabled.  Each ticker consumes up to 2 AV calls
+# (OVERVIEW + RSI).  The free tier allows 25 calls/day, so 10 tickers is a
+# conservative bound that leaves room for retries and ad-hoc lookups.
+ALPHA_VANTAGE_DAILY_LIMIT: int = 25
+ALPHA_VANTAGE_TICKERS_PER_RUN: int = 10  # max tickers per /analyze call
+
+# ---------------------------------------------------------------------------
 # Fallback universe (~30 momentum-quality tickers)
 #
 # This list serves two purposes:

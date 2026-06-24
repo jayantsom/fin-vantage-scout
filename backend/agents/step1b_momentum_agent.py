@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from backend.data.market_data import get_price_history
+from backend.data.alpha_vantage import get_rsi
 
 if TYPE_CHECKING:
     from backend.app import GraphState
@@ -41,6 +42,9 @@ class MomentumResult(BaseModel):
 
     Percentile ranks range from 0 (worst) to 100 (best).
     None means the calculation couldn't be completed (not enough price data).
+
+    rsi_14 is sourced independently from Alpha Vantage (14-day RSI, daily
+    interval) and is None when the AV key is absent or the call fails.
     """
 
     ticker: str
@@ -48,6 +52,7 @@ class MomentumResult(BaseModel):
     return_12m: float | None = None           # Percentage return over last 12 months
     percentile_rank_6m: float | None = None   # Where this ticker ranks vs peers (6m)
     percentile_rank_12m: float | None = None  # Where this ticker ranks vs peers (12m)
+    rsi_14: float | None = None               # 14-day RSI from Alpha Vantage (0–100)
 
 
 # ---------------------------------------------------------------------------
@@ -142,12 +147,16 @@ def compute_momentum(ticker: str, universe: list[str]) -> MomentumResult:
     if r12 is not None and peer_returns_12m:
         rank12 = _percentile_rank(r12, peer_returns_12m + [r12])
 
+    # Fetch RSI once; it's cached so the second call inside round() won't hit AV.
+    _rsi = get_rsi(ticker)
+
     return MomentumResult(
         ticker=ticker,
         return_6m=round(r6, 2) if r6 is not None else None,
         return_12m=round(r12, 2) if r12 is not None else None,
         percentile_rank_6m=round(rank6, 1) if rank6 is not None else None,
         percentile_rank_12m=round(rank12, 1) if rank12 is not None else None,
+        rsi_14=round(_rsi, 2) if _rsi is not None else None,
     )
 
 

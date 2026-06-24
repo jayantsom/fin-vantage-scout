@@ -49,7 +49,7 @@ from backend.agents.step1b_momentum_agent import MomentumResult, momentum_node
 from backend.agents.step1c_news_agent import NewsSentimentResult, news_sentiment_node
 from backend.agents.step2_synthesis_agent import SynthesisResult, synthesis_node
 from backend.data.universe import get_auto_screen_candidates, get_manual_universe
-from config import FALLBACK_UNIVERSE
+from config import FALLBACK_UNIVERSE, ALPHA_VANTAGE_API_KEY, ALPHA_VANTAGE_TICKERS_PER_RUN
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +235,17 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
             raise HTTPException(
                 status_code=422,
                 detail="All provided tickers were empty or invalid.",
+            )
+        # Alpha Vantage quota guard: each ticker may consume up to 2 AV calls
+        # (OVERVIEW + RSI).  Enforce a cap only when the key is configured.
+        if ALPHA_VANTAGE_API_KEY and len(tickers_cleaned) > ALPHA_VANTAGE_TICKERS_PER_RUN:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Too many tickers ({len(tickers_cleaned)}).  "
+                    f"Alpha Vantage free tier is limited to 25 calls/day. "
+                    f"Please analyse at most {ALPHA_VANTAGE_TICKERS_PER_RUN} tickers per run."
+                ),
             )
         # For momentum percentile ranking, we need a peer universe.  When the
         # user enters only a few tickers, we expand the ranking pool by merging

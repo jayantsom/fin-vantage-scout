@@ -314,8 +314,8 @@ function buildStockCard(item) {
   const rating    = synthesis.rating;   // "Attractive" | "Neutral" | "Caution"
   const sentiment = news.sentiment;     // "Positive"   | "Neutral" | "Negative"
 
-  // Look up full company name from the built-in dictionary
-  const companyName = COMPANY_NAMES[ticker] ?? ticker;
+  // Look up full company name from the yfinance fetch, fallback to dictionary, then ticker
+  const companyName = fundamentals.company_name || COMPANY_NAMES[ticker] || ticker;
 
   // Rating dot character
   const ratingDot = { Attractive: "●", Neutral: "●", Caution: "●" }[rating] ?? "●";
@@ -383,6 +383,7 @@ function buildStockCard(item) {
   const r12m  = momentum.return_12m;
   const pct6  = momentum.percentile_rank_6m;
   const pct12 = momentum.percentile_rank_12m;
+  const rsi   = momentum.rsi_14;
 
   // Unique ID for the headlines list so the toggle button works
   const hlId = `hl-${ticker}-${Date.now()}`;
@@ -407,13 +408,14 @@ function buildStockCard(item) {
 
       <!-- Momentum -->
       <div class="footer-section metric-clickable" onclick="showMetricDoc('momentum')" title="Click to view momentum ranking logic">
-        <div class="footer-section-label">Momentum (vs. Peers)</div>
+        <div class="footer-section-label">Momentum & RSI</div>
         <div class="momentum-bars">
           ${buildMomentumBar("6M", r6m, pct6)}
           ${buildMomentumBar("12M", r12m, pct12)}
+          ${buildMomentumRSIBar("RSI 14", rsi)}
         </div>
         <div style="margin-top:6px;font-size:10px;color:var(--text-muted);">
-          Percentile rank in peer universe
+          Returns vs peers, plus 14D RSI
         </div>
       </div>
 
@@ -439,6 +441,37 @@ function buildMomentumBar(label, returnPct, percentile) {
         <div class="momentum-bar-fill ${fillClass}" style="width:${barWidth}%"></div>
       </div>
       <span class="momentum-bar-val" style="color:${valColor};">${retStr} <span style="color:var(--text-muted);font-size:9px;">${pctStr}</span></span>
+    </div>`;
+}
+
+/** Build a single momentum bar row for RSI. */
+function buildMomentumRSIBar(label, rsiVal) {
+  const rsiStr = rsiVal !== null ? rsiVal.toFixed(1) : "N/A";
+  const barWidth = rsiVal !== null ? Math.min(100, Math.max(0, Math.round(rsiVal))) : 0;
+  
+  let fillClass = "";
+  let valColor = "var(--text-muted)";
+  
+  if (rsiVal !== null) {
+    if (rsiVal >= 60) {
+      fillClass = "fill-attractive";
+      valColor = "var(--c-attractive)";
+    } else if (rsiVal <= 40) {
+      fillClass = "fill-caution";
+      valColor = "var(--c-caution)";
+    } else {
+      fillClass = "fill-neutral";
+      valColor = "var(--text-primary)";
+    }
+  }
+
+  return `
+    <div class="momentum-bar-row">
+      <span class="momentum-bar-label" title="14-Day Relative Strength Index (Alpha Vantage)">${label}</span>
+      <div class="momentum-bar-track">
+        <div class="momentum-bar-fill ${fillClass}" style="width:${barWidth}%"></div>
+      </div>
+      <span class="momentum-bar-val" style="color:${valColor};">${rsiStr}</span>
     </div>`;
 }
 

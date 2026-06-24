@@ -270,8 +270,8 @@ body {
 }
 
 .pill-free {
-  background: var(--brand-gold-dim);
-  color: var(--brand-gold);
+  background: var(--brand-purple-dim);
+  color: var(--brand-purple);
 }
 
 .pill-live {

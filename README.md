@@ -19,8 +19,8 @@ to analyse stocks and produce plain-English investment summaries.
 │  POST /analyze                                                    │
 │      │                                                            │
 │      │  LangGraph fan-out                                         │
-│      ├──► fundamentals_node  (yfinance: current ratio, D/E, ROE) │
-│      ├──► momentum_node      (yfinance: 6m/12m return + rank)    │
+│      ├──► fundamentals_node  (yfinance + Alpha Vantage fallback)  │
+│      ├──► momentum_node      (yfinance rank + Alpha Vantage RSI)  │
 │      └──► news_sentiment_node (DuckDuckGo → LLM light)           │
 │                │                                                  │
 │                └──► synthesis_node (LLM heavy → rating)          │
@@ -66,18 +66,22 @@ cd fin-vantage-scout
 uv sync
 ```
 
-### 2. Set your Groq API key
+### 2. Set your API keys
 
 Create a `.env` file in the project root (this file is git-ignored):
 
 ```
-GROQ_API_KEY=your_key_here
+GROQ_API_KEY=your_groq_key_here
+ALPHA_VANTAGE_API_KEY=your_av_key_here
 ```
 
-Get a free API key at [console.groq.com](https://console.groq.com).
+**Groq (Primary LLM):** Get a free API key at [console.groq.com](https://console.groq.com).
+The system falls back to local Ollama automatically if this key is missing or fails.
 
-The system will fall back to local Ollama automatically if this key is
-missing or if Groq returns an error.
+**Alpha Vantage (Secondary Data):** Get a free API key at [alphavantage.co](https://www.alphavantage.co/support/#api-key).
+- Used as a fallback for missing fundamental data, and for independent RSI momentum signals.
+- **Quota Safety:** The free tier allows 25 calls/day. When configured, the `/analyze` endpoint enforces a strict cap of **10 tickers per run** to prevent burning your daily limit.
+- If left unset, Alpha Vantage calls are silently skipped.
 
 ### 3. (Optional) Set up Ollama fallback
 
@@ -91,25 +95,20 @@ ollama pull llama3.2:3b
 
 All commands should be run **from the project root** so `config.py` is importable.
 
-### Start the backend
+### Start the application
 
 ```bash
 uv run uvicorn backend.app:app --reload
 ```
 
-Verify it's running:
+The application serves the UI directly. Open your browser to:
+`http://localhost:8000`
+
+Verify the backend is running via the API:
 ```bash
 curl http://localhost:8000/health
 # → {"status":"ok","service":"fin-vantage-scout"}
 ```
-
-### Start the frontend (new terminal)
-
-```bash
-uv run streamlit run frontend/streamlit_app.py
-```
-
-Opens at `http://localhost:8501` by default.
 
 ---
 
