@@ -26,6 +26,52 @@ Traditional financial screeners rely on rigid rules and lack qualitative context
 1. **Manual Entry:** Input specific comma-separated tickers (e.g., `NVDA, MSFT, AAPL`) to run targeted analysis.
 2. **Auto (FFTY Screen):** Automatically scrapes the top holdings from the Innovator IBD 50 ETF (FFTY) to dynamically populate the screener with high-momentum, market-leading growth stocks.
 
+## Methodologies & Formulas
+
+The platform algorithmically assesses stocks using the following mathematical formulas before passing structured data to the LLM for qualitative synthesis:
+
+### 1. Current Ratio
+- **Definition:** A liquidity ratio measuring a company's ability to pay short-term obligations (due within one year).
+- **Formula:** `Current Assets / Current Liabilities`
+- **Example Input:** Current Assets = $50B, Current Liabilities = $25B
+- **Example Output:** `2.0` (Strong Liquidity)
+
+### 2. Debt-to-Equity Ratio (D/E)
+- **Definition:** Evaluates a company's financial leverage by comparing its total liabilities to shareholder equity.
+- **Formula:** `Total Debt / Total Shareholders' Equity`
+- **Example Input:** Total Debt = $10B, Equity = $20B
+- **Example Output:** `0.5` or `50%` (Conservative Leverage)
+
+### 3. Return on Equity (ROE)
+- **Definition:** A measure of financial performance calculated by dividing net income by shareholders' equity.
+- **Formula:** `Net Income / Average Shareholders' Equity`
+- **Example Input:** Net Income = $2B, Equity = $10B
+- **Example Output:** `0.20` or `20%` (Strong Profitability)
+
+### 4. Gross Margin
+- **Definition:** The percentage of revenue that exceeds the cost of goods sold (COGS), representing core operational profitability.
+- **Formula:** `(Total Revenue - Cost of Goods Sold) / Total Revenue`
+- **Example Input:** Revenue = $100M, COGS = $40M
+- **Example Output:** `0.60` or `60%` (High Margin)
+
+### 5. Momentum (6-Month & 12-Month Returns)
+- **Definition:** The percentage change in the stock price over a specific trailing period.
+- **Formula:** `(Current Price - Past Price) / Past Price`
+- **Example Input:** Current Price = $150, 6-Month Ago Price = $100
+- **Example Output:** `0.50` or `50%`
+
+### 6. Momentum Percentile Rank
+- **Definition:** A relative ranking (0 to 100) comparing a stock's momentum return against a universe of peer stocks.
+- **Formula:** `(Number of Peers with Lower Return / Total Peers) * 100`
+- **Example Input:** NVDA 6M Return = 80%, outperforming 45 out of 50 peer stocks.
+- **Example Output:** `90th Percentile` (Market Leader)
+
+### 7. Relative Strength Index (RSI - 14 Day)
+- **Definition:** A momentum oscillator measuring the speed and change of price movements to identify overbought (>70) or oversold (<30) conditions.
+- **Formula:** `100 - (100 / (1 + (Average Gain / Average Loss)))`
+- **Example Input:** Avg Gain (14 days) = $2.50, Avg Loss (14 days) = $1.00
+- **Example Output:** `71.4` (Slightly Overbought)
+
 ## File Structure
 
 ```text
@@ -115,52 +161,6 @@ graph TD
 ### Supporting Files
 - **`app.py`:** Initializes the FastAPI app. Defines the `StateGraph` linking the agents. Includes dependency injection for configuration and enforces API rate limits (e.g., 10-ticker cap for Alpha Vantage).
 - **`data/market_data.py` & `data/alpha_vantage.py`:** Contains the physical HTTP/REST requests and `yfinance` SDK calls. Crucially implements SQLite caching (`backend_cache.db`) using an expiration TTL to ensure consecutive runs do not trigger rate limits.
-
-## Methodologies & Formulas
-
-The platform algorithmically assesses stocks using the following mathematical formulas before passing structured data to the LLM for qualitative synthesis:
-
-### 1. Current Ratio
-- **Definition:** A liquidity ratio measuring a company's ability to pay short-term obligations (due within one year).
-- **Formula:** `Current Assets / Current Liabilities`
-- **Example Input:** Current Assets = $50B, Current Liabilities = $25B
-- **Example Output:** `2.0` (Strong Liquidity)
-
-### 2. Debt-to-Equity Ratio (D/E)
-- **Definition:** Evaluates a company's financial leverage by comparing its total liabilities to shareholder equity.
-- **Formula:** `Total Debt / Total Shareholders' Equity`
-- **Example Input:** Total Debt = $10B, Equity = $20B
-- **Example Output:** `0.5` or `50%` (Conservative Leverage)
-
-### 3. Return on Equity (ROE)
-- **Definition:** A measure of financial performance calculated by dividing net income by shareholders' equity.
-- **Formula:** `Net Income / Average Shareholders' Equity`
-- **Example Input:** Net Income = $2B, Equity = $10B
-- **Example Output:** `0.20` or `20%` (Strong Profitability)
-
-### 4. Gross Margin
-- **Definition:** The percentage of revenue that exceeds the cost of goods sold (COGS), representing core operational profitability.
-- **Formula:** `(Total Revenue - Cost of Goods Sold) / Total Revenue`
-- **Example Input:** Revenue = $100M, COGS = $40M
-- **Example Output:** `0.60` or `60%` (High Margin)
-
-### 5. Momentum (6-Month & 12-Month Returns)
-- **Definition:** The percentage change in the stock price over a specific trailing period.
-- **Formula:** `(Current Price - Past Price) / Past Price`
-- **Example Input:** Current Price = $150, 6-Month Ago Price = $100
-- **Example Output:** `0.50` or `50%`
-
-### 6. Momentum Percentile Rank
-- **Definition:** A relative ranking (0 to 100) comparing a stock's momentum return against a universe of peer stocks.
-- **Formula:** `(Number of Peers with Lower Return / Total Peers) * 100`
-- **Example Input:** NVDA 6M Return = 80%, outperforming 45 out of 50 peer stocks.
-- **Example Output:** `90th Percentile` (Market Leader)
-
-### 7. Relative Strength Index (RSI - 14 Day)
-- **Definition:** A momentum oscillator measuring the speed and change of price movements to identify overbought (>70) or oversold (<30) conditions.
-- **Formula:** `100 - (100 / (1 + (Average Gain / Average Loss)))`
-- **Example Input:** Avg Gain (14 days) = $2.50, Avg Loss (14 days) = $1.00
-- **Example Output:** `71.4` (Slightly Overbought)
 
 ## System Workflow & Execution Steps
 
