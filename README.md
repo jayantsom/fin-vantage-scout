@@ -6,6 +6,10 @@
 ![LLM](https://img.shields.io/badge/LLaMA_3-Groq-black.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
+## TL;DR
+
+**Fin-Vantage Scout** is a Python-based, multi-agent AI system (LangGraph + FastAPI) that automatically screens stocks. It uses deterministic APIs (yfinance, Alpha Vantage) to fetch raw financial data and momentum metrics, then passes this hard data to an LLM (LLaMA 3) to generate accurate, hallucination-free investment summaries and ratings.
+
 ## Description
 
 Fin-Vantage Scout is a highly structured, multi-agent financial screening system. It orchestrates parallel AI and data-fetching agents to analyze equities through fundamental data extraction, peer-relative momentum ranking, and LLM-driven news sentiment analysis. Built with LangGraph and FastAPI, the system integrates local caching, API fallbacks, and cloud/local LLM inference to synthesize structured equity consensus ratings.
