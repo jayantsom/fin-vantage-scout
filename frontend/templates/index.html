@@ -4,11 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fin-Vantage Scout — Equity Intelligence Platform</title>
+  <link rel="icon" href="/favicon.ico" />
+  <title>Fin-Vantage Scout - Equity Intelligence Platform</title>
   <meta name="description"
-    content="Multi-agent equity screening platform — fundamentals, momentum, and news sentiment synthesised into structured investment intelligence." />
+    content="Multi-agent equity screening platform - fundamentals, momentum, and news sentiment synthesised into structured investment intelligence." />
 
-  <!-- Tailwind CSS Play CDN (zero install — one script tag) -->
+  <!-- Tailwind CSS Play CDN (zero install - one script tag) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -22,7 +23,10 @@
   </script>
 
   <!-- Custom design-system CSS -->
-  <link rel="stylesheet" href="/static/style.css?v=3" />
+  <link rel="stylesheet" href="/static/style.css?v=6" />
+
+  <!-- ApexCharts (CDN, no build step) -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
 </head>
 
 <body>
@@ -132,7 +136,8 @@
             style="cursor:default; font-size:11.5px; flex-direction:column; align-items:flex-start; gap:4px; padding:6px 10px;">
             <span class="nav-text" style="font-weight:600; color:var(--text-primary);">Data Services</span>
             <span class="nav-text" style="font-size:10px; color:var(--text-muted); line-height:1.4;">· yfinance API
-              (Market Stats)<br> · Alpha Vantage (Fallbacks/RSI)<br> · DuckDuckGo parsing (News snap)</span>
+              (Fundamentals, Technical, Earnings Quality, Valuation, Moat)<br> · Alpha Vantage (Momentum/RSI)<br> ·
+              DuckDuckGo parsing (News snap)</span>
           </div>
 
           <div class="sidebar-nav-item"
@@ -156,6 +161,7 @@
             <span class="stack-tag" style="text-align:center;">Alpha Vantage</span>
             <span class="stack-tag" style="text-align:center;">SQLite</span>
             <span class="stack-tag" style="text-align:center;">Python 3.11</span>
+            <span class="stack-tag" style="text-align:center;">ApexCharts</span>
           </div>
         </div>
 
@@ -177,6 +183,7 @@
               <li style="padding:2px 0;">· News snapshots<br>(not a tick-by-tick feed)</li>
               <li style="padding:2px 0;">· Ratings are heuristic & educational</li>
               <li style="padding:2px 0;">· Static point-in-time balance sheets</li>
+              <li style="padding:2px 0;">· IBD-style fields are independent approximations</li>
             </ul>
           </div>
         </div>
@@ -239,45 +246,83 @@
         <!-- ==================== SCREENER TAB ==================== -->
         <div id="tab-screener" class="tab-pane active">
 
-          <!-- ── Horizontal Infographic Flow ── -->
+          <!-- ── Horizontal Infographic Flow (7 parallel agents) ── -->
           <div class="pipeline-infographic">
+            <!-- Universe Input -->
             <div class="pipeline-step">
-              <div class="pipeline-step-node">1</div>
+              <div class="pipeline-step-node">⬥</div>
               <div class="pipeline-step-content">
                 <span class="pipeline-step-title">Universe Input</span>
-                <span class="pipeline-step-desc">Manual input or auto FFTY ETF</span>
+                <span class="pipeline-step-desc">Manual tickers / FFTY ETF</span>
               </div>
             </div>
             <div class="pipeline-arrow">→</div>
-            <div class="pipeline-step">
-              <div class="pipeline-step-node">2</div>
-              <div class="pipeline-step-content">
-                <span class="pipeline-step-title">Fundamentals Agent</span>
-                <span class="pipeline-step-desc">Extracts yfinance metrics</span>
+
+            <!-- Fan-out: 7 parallel nodes -->
+            <div class="pipeline-fanout">
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1a</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Fundamentals</span>
+                  <span class="pipeline-step-desc">yfinance · AV fallback</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-amber">1b</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Momentum</span>
+                  <span class="pipeline-step-desc">Percentile rank · RSI</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1c</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Technical</span>
+                  <span class="pipeline-step-desc">ATR · Vol · Acc/Dis≈</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1d</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Earnings Quality</span>
+                  <span class="pipeline-step-desc">Sloan accruals ratio</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1e</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Valuation</span>
+                  <span class="pipeline-step-desc">P/E · P/S · EV/EBITDA</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-amber">1f</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Moat</span>
+                  <span class="pipeline-step-desc">Margin · ROIC CoV</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-purple node-llm">1g
+                  <span class="llm-micro">LLM</span>
+                </div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">News Sentiment</span>
+                  <span class="pipeline-step-desc">DuckDuckGo · LLaMA</span>
+                </div>
               </div>
             </div>
+
             <div class="pipeline-arrow">→</div>
-            <div class="pipeline-step">
-              <div class="pipeline-step-node">3</div>
-              <div class="pipeline-step-content">
-                <span class="pipeline-step-title">Momentum Agent</span>
-                <span class="pipeline-step-desc">Computes relative return rank</span>
-              </div>
-            </div>
-            <div class="pipeline-arrow">→</div>
-            <div class="pipeline-step">
-              <div class="pipeline-step-node">4</div>
-              <div class="pipeline-step-content">
-                <span class="pipeline-step-title">News Sentiment</span>
-                <span class="pipeline-step-desc">LLM processing of search results</span>
-              </div>
-            </div>
-            <div class="pipeline-arrow">→</div>
+
+            <!-- Synthesis -->
             <div class="pipeline-step synthesis-step">
-              <div class="pipeline-step-node">5</div>
+              <div class="pipeline-step-node node-purple node-llm">2
+                <span class="llm-micro">LLM</span>
+              </div>
               <div class="pipeline-step-content">
-                <span class="pipeline-step-title">Synthesis Agent</span>
-                <span class="pipeline-step-desc">Orchestrates overall consensus</span>
+                <span class="pipeline-step-title">Synthesis</span>
+                <span class="pipeline-step-desc">Rating + Composite Score</span>
               </div>
             </div>
           </div>
@@ -294,7 +339,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-                Manual — Enter tickers
+                Manual - Enter tickers
               </button>
               <button class="mode-btn" id="btn-auto" onclick="setMode('auto_screen')" aria-pressed="false">
                 <!-- magnifying-glass icon -->
@@ -302,7 +347,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Auto-Screen — Top 10 FFTY
+                Auto-Screen - Top 10 FFTY
               </button>
             </div>
 
@@ -352,7 +397,7 @@
               <div class="spinner"></div>
               <div class="loading-text">
                 <strong id="loading-stage">Initialising pipeline…</strong><br>
-                <span id="loading-detail">Running parallel agents — fundamentals · momentum · news</span>
+                <span id="loading-detail">Running parallel agents - fundamentals · momentum · news</span>
               </div>
               <div class="progress-bar-wrap">
                 <div class="progress-bar-fill"></div>
@@ -390,10 +435,95 @@
         <div id="tab-methodology" class="tab-pane">
 
           <div class="methodology-header">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+              <button class="run-btn" onclick="setTab('screener')" style="padding:6px 14px;font-size:12px;"
+                aria-label="Back to screener">← Back to Screener</button>
+            </div>
             <div class="methodology-title">System Methodology & Metric Definitions</div>
             <div class="methodology-desc">
               Explore the quantitative calculation logics, underlying data structures, and the agent consensus
               architecture that drive Fin-Vantage Scout.
+            </div>
+          </div>
+
+          <!-- Pipeline infographic reused on methodology page -->
+          <div class="pipeline-infographic" style="margin-bottom:24px;">
+            <!-- Universe Input -->
+            <div class="pipeline-step">
+              <div class="pipeline-step-node">⬥</div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">Universe Input</span>
+                <span class="pipeline-step-desc">Manual tickers / FFTY ETF</span>
+              </div>
+            </div>
+            <div class="pipeline-arrow">→</div>
+
+            <!-- Fan-out: 7 parallel nodes -->
+            <div class="pipeline-fanout">
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1a</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Fundamentals</span>
+                  <span class="pipeline-step-desc">yfinance · AV fallback</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-amber">1b</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Momentum</span>
+                  <span class="pipeline-step-desc">Percentile rank · RSI</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1c</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Technical</span>
+                  <span class="pipeline-step-desc">ATR · Vol · Acc/Dis≈</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1d</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Earnings Quality</span>
+                  <span class="pipeline-step-desc">Sloan accruals ratio</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-teal">1e</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Valuation</span>
+                  <span class="pipeline-step-desc">P/E · P/S · EV/EBITDA</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-amber">1f</div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">Moat</span>
+                  <span class="pipeline-step-desc">Margin · ROIC CoV</span>
+                </div>
+              </div>
+              <div class="pipeline-step pipeline-step-sm">
+                <div class="pipeline-step-node node-purple node-llm">1g
+                  <span class="llm-micro">LLM</span>
+                </div>
+                <div class="pipeline-step-content">
+                  <span class="pipeline-step-title">News Sentiment</span>
+                  <span class="pipeline-step-desc">DuckDuckGo · LLaMA</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pipeline-arrow">→</div>
+
+            <!-- Synthesis -->
+            <div class="pipeline-step synthesis-step">
+              <div class="pipeline-step-node node-purple node-llm">2
+                <span class="llm-micro">LLM</span>
+              </div>
+              <div class="pipeline-step-content">
+                <span class="pipeline-step-title">Synthesis</span>
+                <span class="pipeline-step-desc">Rating + Composite Score</span>
+              </div>
             </div>
           </div>
 
@@ -512,6 +642,103 @@
               <span class="methodology-card-badge badge-tech-langgraph">yfinance + Alpha Vantage</span>
             </div>
 
+
+
+            <!-- Technical -->
+            <div class="methodology-card" id="doc-technical">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+                Technical Metrics (step1c)
+              </div>
+              <div class="methodology-card-formula">OHLCV → ATR, HV, Volume %, % Off 52W High, Acc/Dis≈</div>
+              <div class="methodology-card-text">
+                <p>Computes 5 market-structure metrics from 2 years of daily price/volume data:</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>Volume % vs 50d Avg</strong>: (Last Vol − Avg50d) / Avg50d</li>
+                  <li><strong>% Off 52W High</strong>: (Price − High52W) / High52W</li>
+                  <li><strong>Hist. Volatility</strong>: Annualised 20-day stdev of log returns × √252</li>
+                  <li><strong>ATR (14-day)</strong>: Avg of max(High−Low, |High−PrevClose|, |Low−PrevClose|)</li>
+                  <li><strong>Acc/Dis≈</strong>: Cumulative OBV proxy - independently estimated, not IBD's rating.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance (2y OHLCV)</span>
+            </div>
+
+            <!-- Earnings Quality -->
+            <div class="methodology-card" id="doc-earnings-quality">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M15 7h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Earnings Quality - Sloan Accruals (step1d)
+              </div>
+              <div class="methodology-card-formula">(Net Income − OCF) / Total Assets &nbsp;|&nbsp; OCF / Net Income
+              </div>
+              <div class="methodology-card-text">
+                <p>Based on Sloan (1996). Measures whether earnings are backed by real cash flows or non-cash accruals.
+                </p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>Accruals Ratio &lt; 0</strong>: Cash flow exceeds reported income - high quality.</li>
+                  <li><strong>Accruals Ratio &gt; 0.1</strong>: Significant non-cash accruals - lower quality signal.
+                  </li>
+                  <li><strong>Cash Conversion ≥ 1.0</strong>: Earnings are well-supported by operating cash flow.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance Cash Flow</span>
+            </div>
+
+            <!-- Valuation -->
+            <div class="methodology-card" id="doc-valuation">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16v0" />
+                </svg>
+                Valuation Multiples (step1e)
+              </div>
+              <div class="methodology-card-formula">P/E = Price / EPS &nbsp;|&nbsp; P/S = MktCap / Revenue &nbsp;|&nbsp;
+                EV/EBITDA</div>
+              <div class="methodology-card-text">
+                <p>Standard valuation ratios benchmarked against same-sector peers in the current analysis batch.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>Peer Median P/E</strong>: Median P/E of same-sector batch tickers only - not a broad
+                    market benchmark.</li>
+                  <li><strong>EV/EBITDA</strong>: Enterprise Value / EBITDA - useful for comparing capital structures.
+                  </li>
+                  <li><strong>P/S</strong>: Price / Sales - relevant for high-growth companies with low/negative
+                    earnings.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-yfinance">yfinance (batch-scoped)</span>
+            </div>
+
+            <!-- Moat -->
+            <div class="methodology-card" id="doc-moat">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Competitive Moat - Durability (step1f)
+              </div>
+              <div class="methodology-card-formula">CoV (Gross Margin) &nbsp;|&nbsp; CoV (ROIC Proxy) &nbsp;|&nbsp; CoV
+                (Revenue Growth)</div>
+              <div class="methodology-card-text">
+                <p>CoV = Standard Deviation / Mean. Lower CoV = more consistent performance = stronger moat proxy.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>Margin Stability</strong>: CoV of annual gross margin across available years.</li>
+                  <li><strong>ROIC Persistence</strong>: CoV of net income / total assets (ROIC proxy) across years.
+                  </li>
+                  <li><strong>Revenue Consistency</strong>: CoV of year-over-year revenue growth rates.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-langgraph">yfinance Annual Financials</span>
+            </div>
+
             <!-- News Sentiment -->
             <div class="methodology-card" id="doc-news">
               <div class="methodology-card-title">
@@ -519,7 +746,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
-                News Sentiment (LLM Engine)
+                News Sentiment (step1g)
               </div>
               <div class="methodology-card-formula">DuckDuckGo Search &rarr; LLaMA Classifier</div>
               <div class="methodology-card-text">
@@ -532,6 +759,29 @@
                 </ul>
               </div>
               <span class="methodology-card-badge badge-tech-langgraph">LangGraph Engine</span>
+            </div>
+
+            <!-- Composite Score -->
+            <div class="methodology-card" id="doc-composite">
+              <div class="methodology-card-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z" />
+                </svg>
+                Composite Score (step2)
+              </div>
+              <div class="methodology-card-formula">40% Momentum + 35% EPS Growth + 25% Gross Margin → 1–99</div>
+              <div class="methodology-card-text">
+                <p>A single blended score (1–99) computed deterministically before the LLM synthesis step.</p>
+                <ul style="margin-top: 8px; padding-left: 16px;">
+                  <li><strong>Momentum (40%)</strong>: Average of 6m and 12m percentile ranks (already 0–100).</li>
+                  <li><strong>EPS Growth (35%)</strong>: Latest-quarter YoY EPS % change mapped to 0–100 (50% growth →
+                    100).</li>
+                  <li><strong>Gross Margin (25%)</strong>: Gross margin value (0.0–1.0) scaled to 0–100.</li>
+                  <li>Missing components reduce the effective weight proportionally.</li>
+                </ul>
+              </div>
+              <span class="methodology-card-badge badge-tech-langgraph">Calculated - No LLM</span>
             </div>
           </div>
 
@@ -569,9 +819,9 @@
   </div><!-- /app-shell -->
 
   <!-- ════════════════════════════════════════════════════════════
-     APP SCRIPT (inline, single file — no build step needed)
+     APP SCRIPT (inline, single file - no build step needed)
  ════════════════════════════════════════════════════════════ -->
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=3"></script>
 </body>
 
 </html>

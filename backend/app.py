@@ -1,23 +1,21 @@
 """
 backend/app.py — The central wiring file.
 
-This is the one place that knows the full shape of the pipeline:
-  1. The LangGraph graph definition (fan-out / fan-in)
-  2. The FastAPI routes that trigger the graph
+Phase 3 update: 7 parallel step-1 nodes fan into step2 synthesis.
+A sector/PE pre-pass runs before the graph loop to compute peer_pes for
+the valuation agent (batch-scoped, same-sector peers only).
 
-Reading order for beginners
----------------------------
-Start with GraphState to understand what data flows through the graph.
-Then look at build_graph() to see how nodes connect.
-Then look at the /analyze route to see how a web request triggers the graph.
+Graph shape (fan-out / fan-in):
 
-LangGraph primer
-----------------
-LangGraph models computation as a directed graph where each node is a
-function that receives the current "state" and returns a dict of updates.
-The framework merges those updates back into the state before calling the
-next node.  Parallel nodes run concurrently (in separate threads by
-default) and their outputs are merged before the next node runs.
+    START
+      |
+      +---> fundamentals_node      --+
+      +---> momentum_node          --+
+      +---> technical_node         --+
+      +---> earnings_quality_node  --+--> synthesis_node --> END
+      +---> valuation_node         --+
+      +---> moat_node              --+
+      +---> news_node (1g, LLM)    --+
 """
 
 from __future__ import annotations
@@ -27,8 +25,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 # --------------------------------------------------------------------------
-# Path fix: ensure the project root is on sys.path so `config` is importable
-# when uvicorn runs from the project root.
+# Path fix: ensure the project root is on sys.path so `config` is importable.
 # --------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -46,8 +43,13 @@ from typing_extensions import TypedDict
 
 from backend.agents.step1a_fundamentals_agent import FundamentalsResult, fundamentals_node
 from backend.agents.step1b_momentum_agent import MomentumResult, momentum_node
-from backend.agents.step1c_news_agent import NewsSentimentResult, news_sentiment_node
+from backend.agents.step1c_technical_agent import TechnicalResult, technical_node
+from backend.agents.step1d_earnings_quality_agent import EarningsQualityResult, earnings_quality_node
+from backend.agents.step1e_valuation_agent import ValuationResult, valuation_node
+from backend.agents.step1f_moat_agent import MoatResult, moat_node
+from backend.agents.step1g_news_agent import NewsSentimentResult, news_sentiment_node
 from backend.agents.step2_synthesis_agent import SynthesisResult, synthesis_node
+from backend.data.market_data import get_fundamentals_data
 from backend.data.universe import get_auto_screen_candidates, get_manual_universe
 from config import FALLBACK_UNIVERSE, ALPHA_VANTAGE_API_KEY, ALPHA_VANTAGE_TICKERS_PER_RUN
 
@@ -66,12 +68,21 @@ class GraphState(TypedDict):
     they didn't touch.
     """
 
-    ticker: str                                    # The stock being analysed
-    universe: list[str]                            # Peer list for momentum rank
-    fundamentals_result: FundamentalsResult        # Filled by step1a
-    momentum_result: MomentumResult                # Filled by step1b
-    news_result: NewsSentimentResult               # Filled by step1c
-    synthesis_result: SynthesisResult              # Filled by step2
+    ticker: str                                          # The stock being analysed
+    universe: list[str]                                  # Peer list for momentum rank
+    peer_pes: list[float]                                # Same-sector batch PE values (excl. self)
+
+    # Step-1 results (filled by parallel nodes)
+    fundamentals_result: FundamentalsResult
+    momentum_result: MomentumResult
+    news_result: NewsSentimentResult
+    technical_result: TechnicalResult
+    earnings_quality_result: EarningsQualityResult
+    valuation_result: ValuationResult
+    moat_result: MoatResult
+
+    # Step-2 result (filled by synthesis node)
+    synthesis_result: SynthesisResult
 
 
 # ---------------------------------------------------------------------------
@@ -83,46 +94,79 @@ def build_graph() -> StateGraph:
     """
     Build and compile the LangGraph analysis pipeline.
 
-    Graph shape (fan-out then fan-in):
-
-        START
-          |
-          +---> fundamentals_node --+
-          |                         |
-          +---> momentum_node   ----+--> synthesis_node --> END
-          |                         |
-          +---> news_node      -----+
-
-    The three step-1 nodes run in parallel.  LangGraph waits for all three
-    to finish before calling synthesis_node.
+    7 step-1 nodes run in parallel; all feed into synthesis_node.
     """
-    # Create a graph builder that will hold our GraphState.
     builder: StateGraph = StateGraph(GraphState)
 
-    # Register every node (function name → label in the graph).
     builder.add_node("fundamentals", fundamentals_node)
     builder.add_node("momentum", momentum_node)
     builder.add_node("news", news_sentiment_node)
+    builder.add_node("technical", technical_node)
+    builder.add_node("earnings_quality", earnings_quality_node)
+    builder.add_node("valuation", valuation_node)
+    builder.add_node("moat", moat_node)
     builder.add_node("synthesis", synthesis_node)
 
-    # Fan-out: START triggers all three step-1 nodes in parallel.
-    builder.add_edge(START, "fundamentals")
-    builder.add_edge(START, "momentum")
-    builder.add_edge(START, "news")
+    # Fan-out: START triggers all 7 step-1 nodes in parallel.
+    for node in ["fundamentals", "momentum", "news", "technical",
+                 "earnings_quality", "valuation", "moat"]:
+        builder.add_edge(START, node)
+        builder.add_edge(node, "synthesis")
 
-    # Fan-in: all three step-1 nodes feed into synthesis.
-    builder.add_edge("fundamentals", "synthesis")
-    builder.add_edge("momentum", "synthesis")
-    builder.add_edge("news", "synthesis")
-
-    # After synthesis, the graph ends.
     builder.add_edge("synthesis", END)
 
     return builder.compile()
 
 
-# Compile once at startup — not on every request.
+# Compile once at startup.
 _graph = build_graph()
+
+
+# ---------------------------------------------------------------------------
+# Sector/PE pre-pass helper
+# ---------------------------------------------------------------------------
+
+
+def _build_sector_pe_map(tickers: list[str]) -> dict[str, tuple[str | None, float | None]]:
+    """
+    For each ticker in the batch, fetch sector and trailing P/E from the
+    already-cached fundamentals data.  Returns {ticker: (sector, pe)}.
+
+    This reuses the SQLite cache from get_fundamentals_data — no extra
+    network calls if fundamentals were already fetched this session.
+    """
+    result: dict[str, tuple[str | None, float | None]] = {}
+    for ticker in tickers:
+        raw = get_fundamentals_data(ticker)
+        sector = raw.get("sector") if raw else None
+        pe_raw = raw.get("trailingPE") if raw else None
+        pe: float | None = None
+        if pe_raw is not None:
+            try:
+                f = float(pe_raw)
+                pe = f if -500 <= f <= 2000 else None
+            except (ValueError, TypeError):
+                pass
+        result[ticker] = (sector, pe)
+    return result
+
+
+def _get_peer_pes(ticker: str, sector_pe_map: dict[str, tuple[str | None, float | None]]) -> list[float]:
+    """
+    Return P/E values of same-sector batch peers, excluding `ticker` itself.
+    Empty list if no sector match or fewer than 2 peers available.
+    """
+    my_sector, _ = sector_pe_map.get(ticker, (None, None))
+    if not my_sector:
+        return []
+
+    peers = []
+    for t, (sec, pe) in sector_pe_map.items():
+        if t == ticker:
+            continue
+        if sec == my_sector and pe is not None:
+            peers.append(pe)
+    return peers
 
 
 # ---------------------------------------------------------------------------
@@ -144,12 +188,16 @@ class AnalyzeRequest(BaseModel):
 
 
 class TickerAnalysis(BaseModel):
-    """Per-ticker result bundling all four agent outputs."""
+    """Per-ticker result bundling all agent outputs."""
 
     ticker: str
     fundamentals: FundamentalsResult
     momentum: MomentumResult
     news: NewsSentimentResult
+    technical: TechnicalResult
+    earnings_quality: EarningsQualityResult
+    valuation: ValuationResult
+    moat: MoatResult
     synthesis: SynthesisResult
 
 
@@ -167,14 +215,9 @@ class AnalyzeResponse(BaseModel):
 app = FastAPI(
     title="Fin-Vantage Scout",
     description="Multi-agent equity screener — educational portfolio project.",
-    version="0.1.0",
+    version="0.3.0",
 )
 
-# ---------------------------------------------------------------------------
-# CORS — allow the browser's fetch() calls to reach /analyze from any
-# localhost origin (Streamlit used port 8501; the new HTML frontend is
-# served directly by this FastAPI server on port 8000).
-# ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8000", "http://127.0.0.1:8000", "null"],
@@ -182,18 +225,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Static files + Jinja2 templates
-# Paths are relative to this file (backend/app.py).
-# ROOT is already defined above as the project root directory.
-# ---------------------------------------------------------------------------
-
 _FRONTEND = ROOT / "frontend"
-
-# Mount /static → frontend/static/ so the browser can load CSS, JS, images.
 app.mount("/static", StaticFiles(directory=_FRONTEND / "static"), name="static")
-
-# Jinja2Templates points at frontend/templates/ which holds index.html.
 _templates = Jinja2Templates(directory=_FRONTEND / "templates")
 
 
@@ -206,22 +239,28 @@ def serve_frontend(request: Request) -> HTMLResponse:
         return _templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse(_FRONTEND / "favicon.ico")
+
+
 @app.get("/health")
 def health() -> dict:
-    """Simple liveness check. Returns 200 OK when the server is running."""
+    """Simple liveness check."""
     return {"status": "ok", "service": "fin-vantage-scout"}
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     """
-    Run the full 4-agent pipeline on one or more tickers.
+    Run the full 7-agent pipeline on one or more tickers.
 
-    Manual mode   : provide {"mode":"manual","tickers":["AAPL","MSFT"]}
-    Auto-screen   : provide {"mode":"auto_screen"} — system picks top 10
+    Manual mode   : {"mode":"manual","tickers":["AAPL","MSFT"]}
+    Auto-screen   : {"mode":"auto_screen"} — system picks top 10
 
-    Returns a list of per-ticker results.  Each result includes raw data
-    from all four agents plus the synthesised rating and explanation.
+    Returns a list of per-ticker results including all 7 agent outputs,
+    composite_score, and momentum_volume_confirmed.
     """
     # --- Input validation ---------------------------------------------------
     if request.mode == "manual":
@@ -236,8 +275,6 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 status_code=422,
                 detail="All provided tickers were empty or invalid.",
             )
-        # Alpha Vantage quota guard: each ticker may consume up to 2 AV calls
-        # (OVERVIEW + RSI).  Enforce a cap only when the key is configured.
         if ALPHA_VANTAGE_API_KEY and len(tickers_cleaned) > ALPHA_VANTAGE_TICKERS_PER_RUN:
             raise HTTPException(
                 status_code=422,
@@ -247,36 +284,40 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                     f"Please analyse at most {ALPHA_VANTAGE_TICKERS_PER_RUN} tickers per run."
                 ),
             )
-        # For momentum percentile ranking, we need a peer universe.  When the
-        # user enters only a few tickers, we expand the ranking pool by merging
-        # their tickers with FALLBACK_UNIVERSE (deduped) so every ticker gets a
-        # meaningful percentile rank instead of null.
         peer_universe = list(dict.fromkeys(tickers_cleaned + FALLBACK_UNIVERSE))
-        # The outer loop analyses only what the user requested.
         universe = tickers_cleaned
     else:
-        # auto_screen mode: ignore tickers field entirely.
         print("[app] Auto-screen mode — fetching FFTY candidates…")
         universe = get_auto_screen_candidates()
-        peer_universe = universe  # already a broad set
+        peer_universe = universe
 
     print(f"[app] Analysing {len(universe)} ticker(s): {universe}")
+
+    # --- Sector/PE pre-pass for valuation peer comparison ------------------
+    # This reuses the SQLite cache — no extra network calls on warm runs.
+    print("[app] Building sector/PE map for valuation peer comparison…")
+    sector_pe_map = _build_sector_pe_map(universe)
 
     # --- Run the graph on each ticker --------------------------------------
     results: list[TickerAnalysis] = []
     for ticker in universe:
+        peer_pes = _get_peer_pes(ticker, sector_pe_map)
+
         initial_state: GraphState = {
             "ticker": ticker,
-            "universe": peer_universe,  # broad peer set for percentile ranking
-            # The three result fields start as None — LangGraph requires all
-            # TypedDict keys to be present, so we fill them with empty models.
+            "universe": peer_universe,
+            "peer_pes": peer_pes,
+            # Default empty models so TypedDict keys are always present
             "fundamentals_result": FundamentalsResult(ticker=ticker, data_available=False),
             "momentum_result": MomentumResult(ticker=ticker),
             "news_result": NewsSentimentResult(ticker=ticker),
+            "technical_result": TechnicalResult(ticker=ticker),
+            "earnings_quality_result": EarningsQualityResult(ticker=ticker),
+            "valuation_result": ValuationResult(ticker=ticker),
+            "moat_result": MoatResult(ticker=ticker),
             "synthesis_result": SynthesisResult(ticker=ticker),
         }
 
-        # .invoke() runs the full graph synchronously and returns the final state.
         final_state: GraphState = _graph.invoke(initial_state)
 
         results.append(
@@ -285,6 +326,10 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 fundamentals=final_state["fundamentals_result"],
                 momentum=final_state["momentum_result"],
                 news=final_state["news_result"],
+                technical=final_state["technical_result"],
+                earnings_quality=final_state["earnings_quality_result"],
+                valuation=final_state["valuation_result"],
+                moat=final_state["moat_result"],
                 synthesis=final_state["synthesis_result"],
             )
         )
@@ -292,6 +337,5 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     return AnalyzeResponse(mode=request.mode, results=results)
 
 
-# Allow running with `python backend/app.py` for quick local testing.
 if __name__ == "__main__":
     uvicorn.run("backend.app:app", host="0.0.0.0", port=8000, reload=True)

@@ -4,31 +4,11 @@
  * All client-side logic for Fin-Vantage Scout.
  *
  * No framework, no build step.  Plain ES2022 with fetch() and DOM APIs.
- *
- * Sections
- * --------
- *   1. Constants & state
- *   2. Health check
- *   3. Mode switcher
- *   4. Ticker input handling
- *   5. API call + loading state
- *   6. Card rendering (the big piece)
- *   7. Company name lookup (ticker → full name)
- *   8. Utility helpers
- *   9. Scroll helpers
- *  10. Init on DOMContentLoaded
  */
-
-/* ═══════════════════════════════════════════════════════════════
-   1. Constants & state
-═══════════════════════════════════════════════════════════════ */
 
 const BACKEND_URL = "http://localhost:8000";
 
-/** Current analysis mode — kept in sync with the UI. */
 let currentMode = "manual";
-
-/** Parsed list of tickers from the text input. */
 let currentTickers = [];
 
 /* ─── Theme Management ─── */
@@ -81,11 +61,8 @@ function resetApp() {
 
 /* ─── Tab Switching ─── */
 function setTab(tabId) {
-  // Update sidebar active buttons
   document.getElementById("nav-screener")?.classList.toggle("active", tabId === "screener");
   document.getElementById("nav-methodology")?.classList.toggle("active", tabId === "methodology");
-
-  // Show/hide tab panels
   document.getElementById("tab-screener").classList.toggle("active", tabId === "screener");
   document.getElementById("tab-methodology").classList.toggle("active", tabId === "methodology");
 }
@@ -93,25 +70,17 @@ function setTab(tabId) {
 /* ─── Metric Documentation Clicking ─── */
 function showMetricDoc(metricId) {
   setTab("methodology");
-  
   const targetCard = document.getElementById(`doc-${metricId}`);
   if (targetCard) {
     setTimeout(() => {
       targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
       targetCard.classList.add("highlight-pulse");
-      
-      // Remove the highlight class after the pulse animation runs
-      setTimeout(() => {
-        targetCard.classList.remove("highlight-pulse");
-      }, 2000);
+      setTimeout(() => targetCard.classList.remove("highlight-pulse"), 2000);
     }, 150);
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   2. Health check  — polls /health and updates the dot in the topbar
-═══════════════════════════════════════════════════════════════ */
-
+/* ─── Health check ─── */
 async function checkHealth() {
   const dot   = document.getElementById("health-dot");
   const label = document.getElementById("health-label");
@@ -129,13 +98,9 @@ async function checkHealth() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   3. Mode switcher
-═══════════════════════════════════════════════════════════════ */
-
+/* ─── Mode switcher ─── */
 function setMode(mode) {
   currentMode = mode;
-
   const btnManual = document.getElementById("btn-manual");
   const btnAuto   = document.getElementById("btn-auto");
   const manualRow = document.getElementById("manual-input-row");
@@ -162,10 +127,7 @@ function setMode(mode) {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   4. Ticker input handling
-═══════════════════════════════════════════════════════════════ */
-
+/* ─── Ticker input handling ─── */
 function onTickerInput() {
   const raw = document.getElementById("ticker-input").value;
   currentTickers = raw
@@ -176,7 +138,6 @@ function onTickerInput() {
   renderTickerPreview();
 }
 
-/** Allow pressing Enter to submit. */
 function onTickerKeydown(event) {
   if (event.key === "Enter" && currentTickers.length > 0) {
     runAnalysis();
@@ -201,10 +162,7 @@ function updateRunButton() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   5. API call + loading state
-═══════════════════════════════════════════════════════════════ */
-
+/* ─── API call + loading state ─── */
 async function runAnalysis() {
   clearError();
   hideResults();
@@ -217,7 +175,7 @@ async function runAnalysis() {
 
   try {
     const t0 = Date.now();
-    updateLoadingStage("Dispatching agents…", "Fan-out: fundamentals · momentum · news running in parallel");
+    updateLoadingStage("Dispatching agents…", "Fan-out: 7 parallel agents running");
 
     const res = await fetch(`${BACKEND_URL}/analyze`, {
       method: "POST",
@@ -240,9 +198,7 @@ async function runAnalysis() {
     showLoading(false);
     let msg = err.message || String(err);
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-      msg = `Could not connect to the backend at <code>${BACKEND_URL}</code>. `
-          + `Make sure the backend is running:<br><br>`
-          + `<code>uv run uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload</code>`;
+      msg = `Could not connect to the backend at <code>${BACKEND_URL}</code>. Make sure the backend is running.`;
     }
     showError(msg);
   }
@@ -274,12 +230,14 @@ function clearError() {
 function hideResults() {
   document.getElementById("results-container").classList.remove("visible");
   document.getElementById("results-grid").innerHTML = "";
+  // Clear any existing chart instances to avoid memory leaks
+  window._charts = window._charts || {};
+  Object.values(window._charts).forEach(c => c.destroy());
+  window._charts = {};
+  window._chartData = {};
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   6. Card rendering
-═══════════════════════════════════════════════════════════════ */
-
+/* ─── Card rendering ─── */
 function renderResults(data, elapsed) {
   const container = document.getElementById("results-container");
   const grid      = document.getElementById("results-grid");
@@ -291,229 +249,301 @@ function renderResults(data, elapsed) {
   grid.innerHTML = "";
   data.results.forEach((item, idx) => {
     const card = buildStockCard(item);
-    // Stagger card entrance animation
     card.style.animationDelay = `${idx * 60}ms`;
     grid.appendChild(card);
+    
+    // Initialize charts after appending to DOM
+    setTimeout(() => {
+      initChart(item.ticker, item);
+    }, 10 + idx * 50);
   });
 
   container.classList.add("visible");
-
-  // Scroll results into view
   setTimeout(() => {
     container.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 100);
 }
 
 /**
- * Build a complete stock card DOM element for one TickerAnalysis object.
- * This is the largest function — it mirrors the data structure returned
- * by the FastAPI /analyze endpoint.
+ * PHASE 4 LAYOUT
  */
 function buildStockCard(item) {
-  const { ticker, synthesis, fundamentals, momentum, news } = item;
-  const rating    = synthesis.rating;   // "Attractive" | "Neutral" | "Caution"
-  const sentiment = news.sentiment;     // "Positive"   | "Neutral" | "Negative"
-
-  // Look up full company name from the yfinance fetch, fallback to dictionary, then ticker
+  const { ticker, synthesis, fundamentals, momentum, news, technical, earnings_quality, valuation, moat } = item;
+  const rating = synthesis.rating;
   const companyName = fundamentals.company_name || COMPANY_NAMES[ticker] || ticker;
-
-  // Rating dot character
   const ratingDot = { Attractive: "●", Neutral: "●", Caution: "●" }[rating] ?? "●";
 
-  // ── Build the card element ──────────────────────────────────────
   const card = document.createElement("article");
   card.className = "stock-card";
   card.setAttribute("data-ticker", ticker);
 
-  // Top colour stripe
+  // 1. Stripe & Header
   card.innerHTML += `<div class="card-stripe stripe-${rating.toLowerCase()}"></div>`;
-
-  // Header row: ticker + company name + rating badge
   card.innerHTML += `
     <div class="card-header">
       <div class="card-ticker-block">
         <div class="card-ticker">${escHtml(ticker)}</div>
         <div class="card-company">${escHtml(companyName)}</div>
       </div>
-      <div class="rating-badge badge-${rating.toLowerCase()}">
-        <span>${ratingDot}</span>
-        ${escHtml(rating)}
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div class="rating-badge" title="Fin-Vantage Composite Score (0-100) combining Fundamentals, Momentum, Valuation, and Quality." onclick="setTab('methodology')" style="cursor:pointer; background:var(--bg-input); border:1px solid var(--brand-teal); color:var(--brand-teal); font-size:16px;">
+          Score: ${synthesis.composite_score || '--'}
+        </div>
+        <div class="rating-badge badge-${rating.toLowerCase()}">
+          <span>${ratingDot}</span>
+          ${escHtml(rating)}
+        </div>
       </div>
     </div>`;
 
-  // AI synthesis explanation
+
+  // 2. AI Analysis (Summary + Sections)
   card.innerHTML += `
-    <div class="card-analysis">
-      ${escHtml(synthesis.explanation || "No synthesis available.")}
-    </div>`;
+    <div class="synthesis-summary" style="padding: 16px 20px 8px; font-size: 14px; color: var(--text-primary); line-height: 1.5;">
+      <strong>Synthesis:</strong> ${escHtml(synthesis.summary || "No summary available.")}
+    </div>
+    <div class="ai-phrases">
+      <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Growth</div><div class="ai-phrase-text">${escHtml(synthesis.growth)}</div></div>
+      <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Quality</div><div class="ai-phrase-text">${escHtml(synthesis.quality)}</div></div>
+      <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Valuation</div><div class="ai-phrase-text">${escHtml(synthesis.valuation)}</div></div>
+      <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Momentum & Tech</div><div class="ai-phrase-text">${escHtml(synthesis.momentum_technical)}</div></div>
+      <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Moat</div><div class="ai-phrase-text">${escHtml(synthesis.moat)}</div></div>
+      <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Sentiment</div><div class="ai-phrase-text">${escHtml(synthesis.sentiment)}</div></div>
+    </div>
+  `;
 
-  // Fundamental metrics grid (4 cells) - Interactive clicks to Methodology
-  const cr    = fmtNum(fundamentals.current_ratio,  ".2f");
-  const de    = fmtNum(fundamentals.debt_to_equity, ".2f");
-  const roe   = fmtPct(fundamentals.roe);
-  const gm    = fmtPct(fundamentals.gross_margin);
-  const gmTrend = fundamentals.gross_margin_trend ?? "N/A";
-
+  // 3. Quick Reference Tiles (Moved up)
   card.innerHTML += `
-    <div class="metrics-grid">
-      <div class="metric-cell metric-clickable" onclick="showMetricDoc('current-ratio')" title="Click to view definition & methodology">
-        <div class="metric-label">Current Ratio</div>
-        <div class="metric-value ${numClass(fundamentals.current_ratio)}">${cr}</div>
-        <div class="metric-sub">Liquidity</div>
-      </div>
-      <div class="metric-cell metric-clickable" onclick="showMetricDoc('debt-to-equity')" title="Click to view definition & methodology">
-        <div class="metric-label">Debt / Equity</div>
-        <div class="metric-value ${fundamentals.debt_to_equity !== null && fundamentals.debt_to_equity > 200 ? "negative" : ""}">${de}</div>
-        <div class="metric-sub">Leverage</div>
-      </div>
-      <div class="metric-cell metric-clickable" onclick="showMetricDoc('roe')" title="Click to view definition & methodology">
-        <div class="metric-label">ROE</div>
-        <div class="metric-value ${fundamentals.roe !== null ? (fundamentals.roe > 0 ? "positive" : "negative") : "na"}">${roe}</div>
-        <div class="metric-sub">Profitability</div>
-      </div>
-      <div class="metric-cell metric-clickable" onclick="showMetricDoc('gross-margin')" title="Click to view definition & methodology">
-        <div class="metric-label">Gross Margin</div>
-        <div class="metric-value">${gm}</div>
-        <div class="metric-sub">${escHtml(gmTrend)}</div>
-      </div>
-    </div>`;
+    <div class="quick-tiles">
+      <div class="quick-tile"><div class="quick-tile-label">Avg Pct Rank</div><div class="quick-tile-value">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m)/2, ".0f")}</div></div>
+      <div class="quick-tile"><div class="quick-tile-label">Vol vs 50D</div><div class="quick-tile-value">${fmtNum(technical.volume_pct_change, ".1f")}%</div></div>
+      <div class="quick-tile"><div class="quick-tile-label">Accruals</div><div class="quick-tile-value">${fmtNum(earnings_quality.accruals_ratio, ".3f")}</div></div>
+      <div class="quick-tile"><div class="quick-tile-label">Gross Margin</div><div class="quick-tile-value">${fmtPct(fundamentals.gross_margin)}</div></div>
+      <div class="quick-tile"><div class="quick-tile-label">P/E vs Peers</div><div class="quick-tile-value">${fmtNum(valuation.pe, ".1f")} / ${fmtNum(valuation.peer_median_pe, ".1f")}</div></div>
+    </div>
+  `;
 
-  // Footer row: news sentiment (left) + momentum bars (right) - Interactive clicks to Methodology
-  const r6m   = momentum.return_6m;
-  const r12m  = momentum.return_12m;
-  const pct6  = momentum.percentile_rank_6m;
-  const pct12 = momentum.percentile_rank_12m;
-  const rsi   = momentum.rsi_14;
-
-  // Unique ID for the headlines list so the toggle button works
-  const hlId = `hl-${ticker}-${Date.now()}`;
-
+  // 4. Data Table (Collapsible)
   card.innerHTML += `
-    <div class="card-footer-row">
-
-      <!-- News sentiment -->
-      <div class="footer-section metric-clickable" onclick="showMetricDoc('news')" title="Click to view sentiment logic">
-        <div class="footer-section-label">News Sentiment</div>
-        <div class="sentiment-chip sentiment-${sentiment} metric-clickable-badge">
-          ${sentimentDot(sentiment)} ${escHtml(sentiment)}
+    <details class="card-section" open>
+      <summary>Detailed Agent Metrics</summary>
+      <div class="data-table-container">
+        <div class="tag-legend">
+          <span class="source-tag tag-api">API Raw Data</span>
+          <span class="source-tag tag-calculated">Calculated</span>
+          <span class="source-tag tag-approx" title="Independently estimated; not IBD's proprietary rating.">Approximated Proxy</span>
         </div>
-        <div class="sentiment-justification" style="margin-top:6px;">
-          ${escHtml(news.justification || "")}
-        </div>
-        <!-- Stop propagation on headline toggle click so it doesn't navigate to methodology -->
-        <div onclick="event.stopPropagation();">
-          ${buildHeadlinesToggle(news.headlines, hlId)}
-        </div>
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th class="numeric">Value</th><th>Source</th></tr></thead>
+          <tbody data-group="1a. Fundamentals">
+            <tr><td>Current Ratio</td><td class="numeric">${fmtNum(fundamentals.current_ratio, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Debt-to-Equity</td><td class="numeric">${fmtNum(fundamentals.debt_to_equity, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>ROE</td><td class="numeric">${fmtPct(fundamentals.roe)}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Gross Margin</td><td class="numeric">${fmtPct(fundamentals.gross_margin)}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>EPS YoY (Latest Qtr)</td><td class="numeric">${fmtNum(fundamentals.eps_pct_change_latest_qtr, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>Sales YoY (Latest Qtr)</td><td class="numeric">${fmtNum(fundamentals.sales_pct_change_last_qtr, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+          </tbody>
+          <tbody data-group="1b. Momentum">
+            <tr><td>6m Return</td><td class="numeric">${fmtNum(momentum.return_6m, ".1f")}%</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>12m Return</td><td class="numeric">${fmtNum(momentum.return_12m, ".1f")}%</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Average Percentile Rank</td><td class="numeric">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m) / 2, ".0f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>RSI (14-Day)</td><td class="numeric">${fmtNum(momentum.rsi_14, ".1f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+          </tbody>
+          <tbody data-group="1c. Technical">
+            <tr><td>Volume</td><td class="numeric">${technical.volume ? technical.volume.toLocaleString() : '--'}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Vol vs 50d Avg</td><td class="numeric">${fmtNum(technical.volume_pct_change, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>% Off 52w High</td><td class="numeric">${fmtNum(technical.pct_off_52w_high, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>Hist. Volatility</td><td class="numeric">${fmtNum(technical.historical_volatility, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>ATR (14-Day)</td><td class="numeric">${fmtNum(technical.atr, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Acc/Dis Approx</td><td class="numeric">${fmtNum(technical.acc_dis_score, ".2f")}</td><td><span class="source-tag tag-approx">Approx</span></td></tr>
+          </tbody>
+          <tbody data-group="1d. Earnings Quality">
+            <tr><td>Sloan Accruals Ratio</td><td class="numeric">${fmtNum(earnings_quality.accruals_ratio, ".3f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>Cash Conversion Ratio</td><td class="numeric">${fmtNum(earnings_quality.cash_conversion_ratio, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+          </tbody>
+          <tbody data-group="1e. Valuation">
+            <tr><td>Trailing P/E</td><td class="numeric">${fmtNum(valuation.pe, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Price / Sales</td><td class="numeric">${fmtNum(valuation.ps, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>EV / EBITDA</td><td class="numeric">${fmtNum(valuation.ev_ebitda, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
+            <tr><td>Peer Median P/E</td><td class="numeric">${fmtNum(valuation.peer_median_pe, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+          </tbody>
+          <tbody data-group="1f. Moat">
+            <tr><td>Margin Stability (CoV)</td><td class="numeric">${fmtNum(moat.margin_stability, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>ROIC Persistence (CoV)</td><td class="numeric">${fmtNum(moat.roic_persistence, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td>Rev Consistency (CoV)</td><td class="numeric">${fmtNum(moat.revenue_consistency, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+          </tbody>
+          <tbody data-group="1g. News Sentiment (LLM)">
+            <tr><td>Sentiment Score</td><td class="numeric">${escHtml(news.sentiment)}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
+            <tr><td colspan="3">${buildHeadlinesToggle(news.headlines, 'hl-'+ticker)}</td></tr>
+          </tbody>
+        </table>
       </div>
+    </details>
+  `;
 
-      <!-- Momentum -->
-      <div class="footer-section metric-clickable" onclick="showMetricDoc('momentum')" title="Click to view momentum ranking logic">
-        <div class="footer-section-label">Momentum & RSI</div>
-        <div class="momentum-bars">
-          ${buildMomentumBar("6M", r6m, pct6)}
-          ${buildMomentumBar("12M", r12m, pct12)}
-          ${buildMomentumRSIBar("RSI 14", rsi)}
-        </div>
-        <div style="margin-top:6px;font-size:10px;color:var(--text-muted);">
-          Returns vs peers, plus 14D RSI
-        </div>
+  // 5. Charts Container
+  card.innerHTML += `
+    <details class="card-section">
+      <summary>Charts & Visualizations</summary>
+      <div class="chart-header">
+        <select class="chart-select" onchange="window.switchChart(this, '${ticker}')">
+          <option value="price_volume">Price & Volume (6M)</option>
+          <option value="momentum">Momentum Percentile</option>
+          <option value="margin_roic">Margin & ROIC Trend</option>
+          ${valuation.peer_comparison_available ? '<option value="valuation">Valuation vs Peers</option>' : ''}
+        </select>
       </div>
+      <div id="chart-${ticker}" class="chart-container"></div>
+    </details>
+  `;
 
-    </div>`;
 
   return card;
 }
 
-/** Build a single momentum bar row. */
-function buildMomentumBar(label, returnPct, percentile) {
-  const retStr = returnPct !== null ? `${returnPct > 0 ? "+" : ""}${returnPct.toFixed(1)}%` : "N/A";
-  const pctStr = percentile !== null ? `${Math.round(percentile)}th pct` : "–";
-
-  // Bar width based on percentile; colour based on return sign
-  const barWidth  = percentile !== null ? Math.max(2, Math.round(percentile)) : 0;
-  const fillClass = percentile === null ? "" : percentile >= 60 ? "fill-attractive" : percentile >= 35 ? "fill-neutral" : "fill-caution";
-  const valColor  = returnPct === null ? "var(--text-muted)" : returnPct > 0 ? "var(--c-attractive)" : "var(--c-caution)";
-
-  return `
-    <div class="momentum-bar-row">
-      <span class="momentum-bar-label">${label}</span>
-      <div class="momentum-bar-track">
-        <div class="momentum-bar-fill ${fillClass}" style="width:${barWidth}%"></div>
-      </div>
-      <span class="momentum-bar-val" style="color:${valColor};">${retStr} <span style="color:var(--text-muted);font-size:9px;">${pctStr}</span></span>
-    </div>`;
-}
-
-/** Build a single momentum bar row for RSI. */
-function buildMomentumRSIBar(label, rsiVal) {
-  const rsiStr = rsiVal !== null ? rsiVal.toFixed(1) : "N/A";
-  const barWidth = rsiVal !== null ? Math.min(100, Math.max(0, Math.round(rsiVal))) : 0;
-  
-  let fillClass = "";
-  let valColor = "var(--text-muted)";
-  
-  if (rsiVal !== null) {
-    if (rsiVal >= 60) {
-      fillClass = "fill-attractive";
-      valColor = "var(--c-attractive)";
-    } else if (rsiVal <= 40) {
-      fillClass = "fill-caution";
-      valColor = "var(--c-caution)";
-    } else {
-      fillClass = "fill-neutral";
-      valColor = "var(--text-primary)";
-    }
-  }
-
-  return `
-    <div class="momentum-bar-row">
-      <span class="momentum-bar-label" title="14-Day Relative Strength Index (Alpha Vantage)">${label}</span>
-      <div class="momentum-bar-track">
-        <div class="momentum-bar-fill ${fillClass}" style="width:${barWidth}%"></div>
-      </div>
-      <span class="momentum-bar-val" style="color:${valColor};">${rsiStr}</span>
-    </div>`;
-}
-
-/** Build the "N headlines" toggle + collapsible list. */
+/* ─── Headlines Toggle Phase 4 ─── */
 function buildHeadlinesToggle(headlines, id) {
   if (!headlines || headlines.length === 0) {
     return `<div style="margin-top:4px;font-size:10px;color:var(--text-muted);">No headlines retrieved.</div>`;
   }
 
+  // Phase 4 headlines are list of dicts: {title, url}
   const items = headlines
-    .map(h => `<div class="headline-item"><span class="headline-bullet">›</span>${escHtml(h)}</div>`)
+    .map(h => `<div class="headline-item" style="padding:4px 0;"><span class="headline-bullet" style="margin-right:6px;">›</span><a href="${escHtml(h.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--brand-teal); text-decoration:none;">${escHtml(h.title)}</a></div>`)
     .join("");
 
   return `
-    <button class="headlines-toggle" onclick="toggleHeadlines('${id}', this)" aria-expanded="false" aria-controls="${id}">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7"/>
+    <button class="headlines-toggle" onclick="toggleHeadlines('${id}', this)" aria-expanded="false" aria-controls="${id}" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:11px; padding:4px 0; display:flex; align-items:center; gap:4px;">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
-      ${headlines.length} headline${headlines.length > 1 ? "s" : ""} used
+      View ${headlines.length} headlines
     </button>
-    <div class="headlines-list" id="${id}" aria-hidden="true">
+    <div class="headlines-list" id="${id}" aria-hidden="true" style="display:none; padding-left:14px;">
       ${items}
     </div>`;
 }
 
-/** Toggle the headlines expander. */
 function toggleHeadlines(id, btn) {
   const list = document.getElementById(id);
   if (!list) return;
-  const isOpen = list.classList.toggle("open");
-  btn.setAttribute("aria-expanded", isOpen);
-  list.setAttribute("aria-hidden", !isOpen);
-  // Flip the chevron via inline style
-  btn.querySelector("svg").style.transform = isOpen ? "rotate(180deg)" : "";
+  const isHidden = list.style.display === "none";
+  list.style.display = isHidden ? "block" : "none";
+  btn.setAttribute("aria-expanded", isHidden);
+  btn.querySelector("svg").style.transform = isHidden ? "rotate(180deg)" : "";
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   7. Company name lookup table
-   Source: well-known US equities.  Fallback = ticker itself.
-═══════════════════════════════════════════════════════════════ */
+/* ─── ApexCharts Integration ─── */
+window._charts = {};
+window._chartData = {};
 
+function initChart(ticker, item) {
+  // Store item data globally for chart switching
+  window._chartData[ticker] = item;
+  renderChart(ticker, "price_volume");
+}
+
+window.switchChart = function(selectEl, ticker) {
+  renderChart(ticker, selectEl.value);
+}
+
+function renderChart(ticker, type) {
+  const containerId = `chart-${ticker}`;
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  
+  if (window._charts[ticker]) {
+    window._charts[ticker].destroy();
+  }
+
+  const data = window._chartData[ticker];
+  let options = {};
+  const isDark = !document.body.classList.contains('light-mode');
+  const textColor = isDark ? '#8a9bbf' : '#475569';
+  const gridColor = isDark ? '#1e293b' : '#e2e8f0';
+
+  if (type === "price_volume") {
+    const ph = data.technical.price_history || [];
+    const vh = data.technical.volume_history || [];
+    
+    // Sort by date ascending for charts
+    const sortedPh = [...ph].sort((a,b) => new Date(a.date) - new Date(b.date));
+    const sortedVh = [...vh].sort((a,b) => new Date(a.date) - new Date(b.date));
+    
+    options = {
+      chart: { type: 'line', height: 280, toolbar: { show: false }, background: 'transparent', animations: { enabled: false } },
+      series: [
+        { name: 'Price', type: 'line', data: sortedPh.map(d => ({ x: d.date, y: d.value })) },
+        { name: 'Volume', type: 'bar', data: sortedVh.map(d => ({ x: d.date, y: d.value })) }
+      ],
+      colors: ['#00b4d8', 'rgba(103, 58, 183, 0.4)'],
+      stroke: { width: [2, 0] },
+      xaxis: { type: 'datetime', labels: { style: { colors: textColor } }, axisBorder: { show: false } },
+      yaxis: [
+        { title: { text: 'Price', style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: v => v ? v.toFixed(2) : '' } },
+        { opposite: true, title: { text: 'Volume', style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: v => v ? (v/1000000).toFixed(1)+'M' : '' } }
+      ],
+      grid: { borderColor: gridColor, strokeDashArray: 4 },
+      legend: { labels: { colors: textColor } },
+      theme: { mode: isDark ? 'dark' : 'light' }
+    };
+  } 
+  else if (type === "momentum") {
+    options = {
+      chart: { type: 'bar', height: 280, toolbar: { show: false }, background: 'transparent' },
+      series: [{ name: 'Percentile Rank', data: [data.momentum.percentile_rank_6m || 0, data.momentum.percentile_rank_12m || 0] }],
+      plotOptions: { bar: { horizontal: true, borderRadius: 4, dataLabels: { position: 'top' } } },
+      colors: ['#f0c040'],
+      xaxis: { categories: ['6M Rank', '12M Rank'], max: 100, labels: { style: { colors: textColor } } },
+      yaxis: { labels: { style: { colors: textColor } } },
+      grid: { borderColor: gridColor, strokeDashArray: 4 },
+      theme: { mode: isDark ? 'dark' : 'light' }
+    };
+  }
+  else if (type === "margin_roic") {
+    const my = data.moat.margin_by_year || [];
+    const ry = data.moat.roic_by_year || [];
+    const sortedMy = [...my].sort((a,b) => a.year - b.year);
+    const sortedRy = [...ry].sort((a,b) => a.year - b.year);
+    
+    if (sortedMy.length < 2) {
+      el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);">Not enough historical data (<2 years)</div>`;
+      return;
+    }
+    
+    options = {
+      chart: { type: 'line', height: 280, toolbar: { show: false }, background: 'transparent' },
+      series: [
+        { name: 'Gross Margin', data: sortedMy.map(d => ({ x: d.year.toString(), y: d.value })) },
+        { name: 'ROIC Proxy', data: sortedRy.map(d => ({ x: d.year.toString(), y: d.value })) }
+      ],
+      colors: ['#00b4d8', '#f0c040'],
+      stroke: { curve: 'smooth', width: 2 },
+      xaxis: { categories: sortedMy.map(d => d.year.toString()), labels: { style: { colors: textColor } } },
+      yaxis: { labels: { style: { colors: textColor }, formatter: v => v ? (v*100).toFixed(1)+'%' : '' } },
+      grid: { borderColor: gridColor, strokeDashArray: 4 },
+      legend: { labels: { colors: textColor } },
+      theme: { mode: isDark ? 'dark' : 'light' }
+    };
+  }
+  else if (type === "valuation") {
+    options = {
+      chart: { type: 'bar', height: 280, toolbar: { show: false }, background: 'transparent' },
+      series: [{ name: 'P/E Ratio', data: [data.valuation.pe || 0, data.valuation.peer_median_pe || 0] }],
+      colors: ['#00b4d8'],
+      xaxis: { categories: [ticker, 'Peer Median'], labels: { style: { colors: textColor } } },
+      yaxis: { labels: { style: { colors: textColor } } },
+      grid: { borderColor: gridColor, strokeDashArray: 4 },
+      theme: { mode: isDark ? 'dark' : 'light' }
+    };
+  }
+
+  const chart = new ApexCharts(el, options);
+  chart.render();
+  window._charts[ticker] = chart;
+}
+
+/* ─── Company name lookup table ─── */
 const COMPANY_NAMES = {
   AAPL: "Apple Inc.", MSFT: "Microsoft Corp.", GOOGL: "Alphabet Inc.", GOOG: "Alphabet Inc.",
   AMZN: "Amazon.com Inc.", NVDA: "NVIDIA Corp.", META: "Meta Platforms Inc.",
@@ -527,13 +557,10 @@ const COMPANY_NAMES = {
   MCD: "McDonald's Corp.", NEE: "NextEra Energy Inc.", NKE: "Nike Inc.",
   TXN: "Texas Instruments Inc.", QCOM: "Qualcomm Inc.", ORCL: "Oracle Corp.",
   AMD: "Advanced Micro Devices", INTC: "Intel Corp.", MU: "Micron Technology",
-  AMAT: "Applied Materials Inc.", LRCX: "Lam Research Corp.", KLAC: "KLA Corp.",
-  MRVL: "Marvell Technology", MPWR: "Monolithic Power Systems",
   NFLX: "Netflix Inc.", DIS: "Walt Disney Co.", PYPL: "PayPal Holdings",
   SHOP: "Shopify Inc.", SQ: "Block Inc.", ROKU: "Roku Inc.",
   UBER: "Uber Technologies", LYFT: "Lyft Inc.", ABNB: "Airbnb Inc.",
   COIN: "Coinbase Global", RBLX: "Roblox Corp.", SNAP: "Snap Inc.",
-  TWTR: "Twitter / X", ZM: "Zoom Video Communications", DOCU: "DocuSign Inc.",
   CRM: "Salesforce Inc.", NOW: "ServiceNow Inc.", SNOW: "Snowflake Inc.",
   DDOG: "Datadog Inc.", NET: "Cloudflare Inc.", CRWD: "CrowdStrike Holdings",
   PANW: "Palo Alto Networks", ZS: "Zscaler Inc.", OKTA: "Okta Inc.",
@@ -542,58 +569,40 @@ const COMPANY_NAMES = {
   TSM: "Taiwan Semiconductor", ASML: "ASML Holding", SAP: "SAP SE",
   SMCI: "Super Micro Computer", DELL: "Dell Technologies", HPQ: "HP Inc.",
   IBM: "IBM Corp.", CSCO: "Cisco Systems", ADBE: "Adobe Inc.",
-  INTU: "Intuit Inc.", ADSK: "Autodesk Inc.", ANSS: "ANSYS Inc.",
-  CDNS: "Cadence Design Systems", SNPS: "Synopsys Inc.",
   GS: "Goldman Sachs Group", MS: "Morgan Stanley", BAC: "Bank of America",
   WFC: "Wells Fargo & Co.", C: "Citigroup Inc.", USB: "U.S. Bancorp",
   GE: "GE Aerospace", BA: "Boeing Co.", CAT: "Caterpillar Inc.",
-  RTX: "RTX Corp.", LMT: "Lockheed Martin Corp.", NOC: "Northrop Grumman",
-  DE: "Deere & Co.", MMM: "3M Co.", HON: "Honeywell International",
-  EMR: "Emerson Electric Co.", ETN: "Eaton Corp.", ROK: "Rockwell Automation",
-  SPGI: "S&P Global Inc.", ICE: "Intercontinental Exchange", CME: "CME Group",
-  CB: "Chubb Ltd.", PGR: "Progressive Corp.", AIG: "American International Group",
   CVS: "CVS Health Corp.", CI: "Cigna Group", HUM: "Humana Inc.",
   AMGN: "Amgen Inc.", GILD: "Gilead Sciences", REGN: "Regeneron Pharmaceuticals",
   VRTX: "Vertex Pharmaceuticals", BIIB: "Biogen Inc.", MRNA: "Moderna Inc.",
   PFE: "Pfizer Inc.", BMY: "Bristol-Myers Squibb",
   ENPH: "Enphase Energy", FSLR: "First Solar Inc.", SEDG: "SolarEdge Technologies",
-  PLUG: "Plug Power Inc.", BE: "Bloom Energy Corp.",
-  AMT: "American Tower Corp.", PLD: "Prologis Inc.", EQIX: "Equinix Inc.",
-  WELL: "Welltower Inc.", O: "Realty Income Corp.",
   SPY: "SPDR S&P 500 ETF", QQQ: "Invesco QQQ Trust", IWM: "iShares Russell 2000 ETF",
   FFTY: "Innovator IBD 50 ETF",
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   8. Utility helpers
-═══════════════════════════════════════════════════════════════ */
-
-/** Format a float with a printf-style format string (only ".Nf" supported). */
+/* ─── Utility helpers ─── */
 function fmtNum(value, fmt) {
   if (value === null || value === undefined) return "N/A";
   const decimals = parseInt((fmt.match(/\.(\d)f/) || ["", "2"])[1], 10);
   return value.toFixed(decimals);
 }
 
-/** Format a float as a percentage (value is in decimal form, e.g. 0.25 → 25.0%). */
 function fmtPct(value) {
   if (value === null || value === undefined) return "N/A";
   return (value * 100).toFixed(1) + "%";
 }
 
-/** CSS class name for a numeric metric — "positive", "negative", or "na". */
 function numClass(value) {
   if (value === null || value === undefined) return "na";
   return value >= 1.5 ? "positive" : value < 1 ? "negative" : "";
 }
 
-/** SVG dot icon for sentiment chips. */
 function sentimentDot(sentiment) {
   const color = { Positive: "#22c55e", Neutral: "#f59e0b", Negative: "#ef4444" }[sentiment] ?? "#8a9bbf";
   return `<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="${color}"/></svg>`;
 }
 
-/** Escape HTML special characters to prevent XSS from API responses. */
 function escHtml(str) {
   if (!str) return "";
   return String(str)
@@ -604,38 +613,11 @@ function escHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   9. Scroll helpers
-═══════════════════════════════════════════════════════════════ */
-
-function scrollToPanel() {
-  document.getElementById("control-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function scrollToResults() {
-  const el = document.getElementById("results-container");
-  if (el && el.classList.contains("visible")) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  } else {
-    document.getElementById("control-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   10. Init on DOMContentLoaded
-═══════════════════════════════════════════════════════════════ */
-
+/* ─── Init on DOMContentLoaded ─── */
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize theme (Light/Dark mode)
   initTheme();
-
-  // Check backend health immediately, then every 30 seconds
   checkHealth();
   setInterval(checkHealth, 30_000);
-
-  // Set initial mode
   setMode("manual");
-
-  // Focus the ticker input
   document.getElementById("ticker-input")?.focus();
 });

@@ -111,13 +111,8 @@ def _records_to_df(records: list[dict]) -> pd.DataFrame:
     """
     Convert a list-of-records (as stored in SQLite) back to a proper DataFrame
     with a DatetimeIndex.
-
-    yfinance's reset_index() produces a "Date" or "Datetime" column.  When we
-    do pd.DataFrame(records) that column comes back as a plain string column,
-    not the index.  This helper promotes it back to a DatetimeIndex.
     """
     df = pd.DataFrame(records)
-    # Find whichever column holds the date (yfinance uses "Date" or "Datetime").
     date_col = next(
         (c for c in df.columns if c.lower() in ("date", "datetime")), None
     )
@@ -136,23 +131,36 @@ def get_price_history(ticker: str, period: str) -> pd.DataFrame | None:
     cache_key = f"price_{ticker}_{period}"
     cached = get_cached(cache_key, PRICE_CACHE_TTL_HOURS)
     if cached is not None:
-        # Reconstruct a proper DataFrame with DatetimeIndex from cached records.
         return _records_to_df(cached)
 
     try:
         df = yf.download(ticker, period=period, auto_adjust=True, progress=False)
         if df.empty:
             return None
-        # yfinance can return MultiIndex columns when downloading a single
-        # ticker; flatten them so the DataFrame is always simple.
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-        # Store as a list-of-records so json.dumps can handle it.
         set_cached(cache_key, df.reset_index().to_dict(orient="records"))
         return df
     except Exception as exc:
         print(f"[market_data] price fetch failed for {ticker}: {exc!r}")
         return None
+
+
+def get_price_volume_history(ticker: str) -> pd.DataFrame | None:
+    """
+    Shared helper that fetches 2 years of daily OHLCV data for `ticker`.
+
+    Using 2y gives enough data for:
+      - 12-month momentum (step1b)
+      - 20-day historical volatility and 14-day ATR (step1d)
+      - OBV accumulation/distribution proxy (step1d)
+      - 50-day average volume comparison (step1d)
+
+    Returns a DataFrame with columns [Open, High, Low, Close, Volume] and a
+    DatetimeIndex, or None if the fetch fails.  Results are cached under the
+    key "price_{ticker}_2y".
+    """
+    return get_price_history(ticker, "2y")
 
 
 def get_fundamentals_data(ticker: str) -> dict[str, Any]:
@@ -161,6 +169,10 @@ def get_fundamentals_data(ticker: str) -> dict[str, Any]:
     Returns a dict with keys like 'currentRatio', 'debtToEquity', etc.
     Missing fields will simply be absent from the dict.
     Never raises — returns an empty dict on failure.
+
+    Phase 3 expansion: also pulls financial-statement fields needed by
+    step1a (EPS/sales growth, sponsorship), step1e (cash flow), step1f
+    (valuation multiples), and step1g (multi-year margins/ROIC).
     """
     cache_key = f"fundamentals_{ticker}"
     cached = get_cached(cache_key, PRICE_CACHE_TTL_HOURS)
@@ -168,21 +180,121 @@ def get_fundamentals_data(ticker: str) -> dict[str, Any]:
         return cached
 
     try:
-        info = yf.Ticker(ticker).info or {}
-        # Persist only the subset we actually use (keeps the DB small).
-        subset = {
+        t = yf.Ticker(ticker)
+        info = t.info or {}
+
+        # --- Basic info fields ---
+        subset: dict[str, Any] = {
             k: info.get(k)
             for k in (
-                "currentRatio",
-                "debtToEquity",
-                "returnOnEquity",
-                "grossMargins",
-                "trailingPegRatio",
-                "forwardPE",
-                "marketCap",
-                "shortName",
+                # Existing fields
+                "currentRatio", "debtToEquity", "returnOnEquity",
+                "grossMargins", "trailingPegRatio", "forwardPE",
+                "marketCap", "shortName",
+                # Valuation (step1f)
+                "trailingPE", "priceToSalesTrailing12Months",
+                "enterpriseToEbitda", "sector",
+                # Earnings growth (step1a)
+                "earningsQuarterlyGrowth", "revenueGrowth",
+                # Ownership (step1a)
+                "heldPercentInsiders",
             )
         }
+
+        # --- Quarterly earnings for EPS trend (step1a) ---
+        try:
+            qe = t.quarterly_income_stmt
+            if qe is not None and not qe.empty:
+                # yfinance income_stmt index is metrics, columns are newest-first dates
+                if "Diluted EPS" in qe.index:
+                    eps_vals = qe.loc["Diluted EPS"].dropna().tolist()
+                elif "Basic EPS" in qe.index:
+                    eps_vals = qe.loc["Basic EPS"].dropna().tolist()
+                elif "Net Income" in qe.index:
+                    eps_vals = qe.loc["Net Income"].dropna().tolist()
+                else:
+                    eps_vals = []
+                # Reverse to make it oldest-first as expected by the agent
+                eps_vals.reverse()
+                subset["quarterly_eps"] = [float(v) for v in eps_vals[-6:]]
+            else:
+                subset["quarterly_eps"] = []
+        except Exception:
+            subset["quarterly_eps"] = []
+
+        # --- Quarterly revenue for sales trend (step1a) ---
+        try:
+            qf = t.quarterly_financials
+            if qf is not None and not qf.empty:
+                if "Total Revenue" in qf.index:
+                    rev_vals = qf.loc["Total Revenue"].dropna().tolist()
+                    subset["quarterly_revenue"] = [float(v) for v in rev_vals[:6]]
+                else:
+                    subset["quarterly_revenue"] = []
+            else:
+                subset["quarterly_revenue"] = []
+        except Exception:
+            subset["quarterly_revenue"] = []
+
+        # --- Annual financials for moat multi-year margins (step1g) ---
+        try:
+            af = t.financials  # annual income statement, newest col first
+            if af is not None and not af.empty:
+                years = [str(c.year) for c in af.columns]
+                gross_profit = af.loc["Gross Profit"].tolist() if "Gross Profit" in af.index else []
+                total_rev = af.loc["Total Revenue"].tolist() if "Total Revenue" in af.index else []
+                net_income = af.loc["Net Income"].tolist() if "Net Income" in af.index else []
+                subset["annual_years"] = years
+                subset["annual_gross_profit"] = [float(v) if pd.notna(v) else None for v in gross_profit]
+                subset["annual_total_revenue"] = [float(v) if pd.notna(v) else None for v in total_rev]
+                subset["annual_net_income"] = [float(v) if pd.notna(v) else None for v in net_income]
+            else:
+                subset["annual_years"] = []
+                subset["annual_gross_profit"] = []
+                subset["annual_total_revenue"] = []
+                subset["annual_net_income"] = []
+        except Exception:
+            subset["annual_years"] = []
+            subset["annual_gross_profit"] = []
+            subset["annual_total_revenue"] = []
+            subset["annual_net_income"] = []
+
+        # --- Annual cash flow for earnings quality (step1e) ---
+        try:
+            cf = t.cashflow
+            if cf is not None and not cf.empty:
+                ocf_key = next((k for k in cf.index if "Operating" in k and "Cash" in k), None)
+                ni_key = next((k for k in cf.index if "Net Income" in k), None)
+                subset["operating_cash_flow"] = float(cf.loc[ocf_key].iloc[0]) if ocf_key else None
+                subset["net_income_cf"] = float(cf.loc[ni_key].iloc[0]) if ni_key else None
+            else:
+                subset["operating_cash_flow"] = None
+                subset["net_income_cf"] = None
+        except Exception:
+            subset["operating_cash_flow"] = None
+            subset["net_income_cf"] = None
+
+        # --- Balance sheet total assets (step1e) ---
+        try:
+            bs = t.balance_sheet
+            if bs is not None and not bs.empty:
+                ta_key = next((k for k in bs.index if "Total Assets" in k), None)
+                subset["total_assets"] = float(bs.loc[ta_key].iloc[0]) if ta_key else None
+            else:
+                subset["total_assets"] = None
+        except Exception:
+            subset["total_assets"] = None
+
+        # --- Institutional holder count (step1a sponsorship) ---
+        try:
+            ih = t.institutional_holders
+            if ih is not None and not ih.empty:
+                subset["institutional_holder_count"] = len(ih)
+            else:
+                subset["institutional_holder_count"] = None
+        except Exception:
+            subset["institutional_holder_count"] = None
+
         set_cached(cache_key, subset)
         return subset
     except Exception as exc:

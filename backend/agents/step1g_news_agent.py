@@ -42,13 +42,13 @@ class NewsSentimentResult(BaseModel):
     """
     News sentiment reading for one ticker.
 
-    headlines     : The raw headline strings fetched from DuckDuckGo.
+    headlines     : List of {title, url} dicts fetched from DuckDuckGo.
     sentiment     : LLM-assigned label: Positive, Neutral, or Negative.
     justification : One-sentence explanation from the LLM.
     """
 
     ticker: str
-    headlines: list[str] = []
+    headlines: list[dict] = []   # [{title: str, url: str}]
     sentiment: Literal["Positive", "Neutral", "Negative"] = "Neutral"
     justification: str = "Insufficient news data to determine sentiment."
 
@@ -58,23 +58,27 @@ class NewsSentimentResult(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def _fetch_headlines(ticker: str, max_results: int = 5) -> list[str]:
+def _fetch_headlines(ticker: str, max_results: int = 5) -> list[dict]:
     """
-    Search DuckDuckGo for recent news about `ticker` and return headlines.
-    Returns an empty list if the search fails.
+    Search DuckDuckGo for recent news about `ticker` and return a list of
+    {title, url} dicts.  Returns an empty list if the search fails.
     """
     query = f"{ticker} stock news"
     try:
         with DDGS() as ddgs:
             results = list(ddgs.news(query, max_results=max_results))
-        return [r.get("title", "") for r in results if r.get("title")]
+        return [
+            {"title": r.get("title", ""), "url": r.get("url", "")}
+            for r in results
+            if r.get("title")
+        ]
     except Exception as exc:
         print(f"[news_agent] DuckDuckGo search failed for {ticker}: {exc!r}")
         return []
 
 
 def _llm_classify_sentiment(
-    ticker: str, headlines: list[str]
+    ticker: str, headlines: list[dict]
 ) -> tuple[Literal["Positive", "Neutral", "Negative"], str]:
     """
     Ask the LLM to classify headline sentiment.
@@ -84,7 +88,7 @@ def _llm_classify_sentiment(
     if not headlines:
         return "Neutral", "No headlines were available to analyse."
 
-    headlines_text = "\n".join(f"- {h}" for h in headlines)
+    headlines_text = "\n".join(f"- {h['title']}" for h in headlines)
     prompt = NEWS_SENTIMENT_PROMPT.format(headlines=headlines_text)
 
     try:

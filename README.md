@@ -12,69 +12,99 @@
 
 ## Description
 
-Fin-Vantage Scout is a highly structured, multi-agent financial screening system. It orchestrates parallel AI and data-fetching agents to analyze equities through fundamental data extraction, peer-relative momentum ranking, and LLM-driven news sentiment analysis. Built with LangGraph and FastAPI, the system integrates local caching, API fallbacks, and cloud/local LLM inference to synthesize structured equity consensus ratings.
+When you enter a list of stock tickers (or run in Auto mode), Fin-Vantage Scout performs a structured analysis of each stock step-by-step:
+
+1. **Information Gathering (Parallel Agents):** The system triggers seven independent analysis specialists in parallel:
+   - **Fundamentals:** Collects core balance sheet health (Current Ratio, Debt-to-Equity) and profitability metrics (ROE, Gross Margin, and quarterly growth rates).
+   - **Momentum:** Evaluates price performance over the last 6 and 12 months, calculating how the stock ranks compared to its peers, along with speed/momentum indicators.
+   - **Technicals:** Examines volume spikes relative to historical averages, price drawdown from yearly highs, volatility, and trading accumulation trends.
+   - **Earnings Quality:** Assesses the cash backing behind reported earnings, validating if profits are real cash flows or just accounting accruals.
+   - **Valuation:** Measures standard pricing multiples (P/E, P/S, EV/EBITDA) against median valuation levels of same-sector peers in the analysis batch.
+   - **Moat Durability:** Computes consistency and stability of profit margins, return on capital, and sales growth over several years.
+   - **News Sentiment:** Scrapes the latest financial headlines and uses a fast language classifier to assess news sentiment.
+2. **Deterministic Composite Scoring:** Before involving any reasoning models, the system mathematically calculates a composite score (1–99) representing the quantitative strength of the stock based on its momentum, earnings growth, and gross margins.
+3. **AI Synthesis & Recommendation:** The qualitative and quantitative results from all 7 specialists are packaged and passed to a senior AI Analyst. This analyst verifies the inputs, writes a concise synthesis summary, assigns a final rating (Attractive, Neutral, or Caution), and comments on key aspects.
+4. **Interactive Visualization:** The web dashboard updates dynamically, showing full-width stock cards, visual indicators for volume-momentum confirmation, interactive technical charts (price/volume, margins, peer valuation), and expandable detailed data sheets.
+
+---
 
 ## Why
 
 Traditional financial screeners rely on rigid rules and lack qualitative context, while raw LLMs hallucinate numbers and struggle with live data. Fin-Vantage Scout bridges this gap by enforcing a **"data-first, LLM-second"** architecture. It hardcodes the mathematical and fundamental data gathering step, passing perfectly structured context to an LLM strictly for qualitative synthesis and sentiment analysis. 
 
-## What's New
+---
 
-- **Alpha Vantage Integration (Fallback & Technicals):** Integrated Alpha Vantage REST API to serve as a robust fallback for missing fundamental data from Yahoo Finance, and to provide native 14-day RSI (Relative Strength Index) technical signals.
-- **Quota Safety Constraints:** Added API key limit constraints to prevent accidental throttling of free-tier data sources.
-- **Enhanced Frontend Dashboard:** Revamped Vanilla JS/CSS frontend replacing the legacy Streamlit UI. Features a dark/light mode toggle, dynamic pipeline flow diagrams, and structured momentum visualizations.
-- **Dynamic Company Mapping:** Automatic company name extraction across API fetches, reducing reliance on hardcoded ticker maps.
+## What's New (Phase 3 & Phase 4 Updates)
+
+- **Sequential Pipeline Reordering (News shifted to 1g):** Reordered the multi-agent graph so that *News Sentiment* acts as the final qualitative "soft signal" (Step 1g) in the parallel fan-out, fanning into Step 2 (Synthesis) alongside the 6 quantitative data specialists.
+- **ApexCharts-Powered Peer Comparison & Technical Charts:** Replaced legacy visualizations with fully responsive, interactive interactive charts in the UI. Users can dropdown-switch between Price/Volume, Momentum Percentiles, Margin & ROIC Trends, and Batch-scoped Peer Valuations.
+- **Advanced Quantitative Metrics (Sloan Accruals & Moat CoV):** Integrated Sloan Accruals (earnings quality) and Coefficient of Variation (CoV) calculations for Moat Durability.
+- **Deterministic 1–99 Composite Score:** Implemented a non-LLM, deterministic grading system combining Momentum, EPS growth, and Gross Margins.
+- **Improved UI Layout with Integrated Summaries:** Redesigned the stock cards to feature the AI Synthesis summary prominently at the top, followed by quick reference tiles, and collapsible detailed metric sheets.
+- **Favicon & Cache Buster Integrations:** Silenced browser 404s for favicon resources and implemented query-string cache-busters (`?v=3`) to ensure instant frontend deliveries of fresh stylesheets and JS updates.
+
+---
 
 ## Stock Selection Modes
 
-1. **Manual Entry:** Input specific comma-separated tickers (e.g., `NVDA, MSFT, AAPL`) to run targeted analysis.
-2. **Auto (FFTY Screen):** Automatically scrapes the top holdings from the Innovator IBD 50 ETF (FFTY) to dynamically populate the screener with high-momentum, market-leading growth stocks.
+1. **Manual Ticker Entry:** Input specific comma-separated tickers (e.g., `NVDA, MSFT, AAPL`) to run targeted analysis.
+2. **Auto (FFTY Screen):** Scrapes the Innovator IBD 50 ETF (FFTY) holdings to dynamically extract and analyze top-tier momentum and growth stocks.
+
+---
 
 ## Methodologies & Formulas
 
 The platform algorithmically assesses stocks using the following mathematical formulas before passing structured data to the LLM for qualitative synthesis:
 
 ### 1. Current Ratio
-- **Definition:** A liquidity ratio measuring a company's ability to pay short-term obligations (due within one year).
 - **Formula:** `Current Assets / Current Liabilities`
-- **Example Input:** Current Assets = $50B, Current Liabilities = $25B
-- **Example Output:** `2.0` (Strong Liquidity)
+- **Definition:** Measures short-term liquidity and ability to cover near-term obligations.
 
 ### 2. Debt-to-Equity Ratio (D/E)
-- **Definition:** Evaluates a company's financial leverage by comparing its total liabilities to shareholder equity.
-- **Formula:** `Total Debt / Total Shareholders' Equity`
-- **Example Input:** Total Debt = $10B, Equity = $20B
-- **Example Output:** `0.5` or `50%` (Conservative Leverage)
+- **Formula:** `Total Debt / Shareholders' Equity`
+- **Definition:** Evaluates financial leverage and capital structure safety.
 
 ### 3. Return on Equity (ROE)
-- **Definition:** A measure of financial performance calculated by dividing net income by shareholders' equity.
-- **Formula:** `Net Income / Average Shareholders' Equity`
-- **Example Input:** Net Income = $2B, Equity = $10B
-- **Example Output:** `0.20` or `20%` (Strong Profitability)
+- **Formula:** `Net Income / Shareholders' Equity`
+- **Definition:** Gauges profitability efficiency in using shareholder capital.
 
 ### 4. Gross Margin
-- **Definition:** The percentage of revenue that exceeds the cost of goods sold (COGS), representing core operational profitability.
 - **Formula:** `(Total Revenue - Cost of Goods Sold) / Total Revenue`
-- **Example Input:** Revenue = $100M, COGS = $40M
-- **Example Output:** `0.60` or `60%` (High Margin)
+- **Definition:** Core profitability ratio indicating margin power.
 
-### 5. Momentum (6-Month & 12-Month Returns)
-- **Definition:** The percentage change in the stock price over a specific trailing period.
-- **Formula:** `(Current Price - Past Price) / Past Price`
-- **Example Input:** Current Price = $150, 6-Month Ago Price = $100
-- **Example Output:** `0.50` or `50%`
+### 5. Momentum Percentile Rank (6M & 12M)
+- **Formula:** `(Number of Tickers with Lower Return / Total Tickers in Universe) * 100`
+- **Definition:** Relative return strength ranking against peer tickers (e.g. FFTY components).
 
-### 6. Momentum Percentile Rank
-- **Definition:** A relative ranking (0 to 100) comparing a stock's momentum return against a universe of peer stocks.
-- **Formula:** `(Number of Peers with Lower Return / Total Peers) * 100`
-- **Example Input:** NVDA 6M Return = 80%, outperforming 45 out of 50 peer stocks.
-- **Example Output:** `90th Percentile` (Market Leader)
+### 6. Volume vs 50d Average
+- **Formula:** `(Current Volume - 50-Day Avg Volume) / 50-Day Avg Volume`
+- **Definition:** Measures volume intensity to confirm if buying or selling momentum is backed by high institutional volume.
 
 ### 7. Relative Strength Index (RSI - 14 Day)
-- **Definition:** A momentum oscillator measuring the speed and change of price movements to identify overbought (>70) or oversold (<30) conditions.
 - **Formula:** `100 - (100 / (1 + (Average Gain / Average Loss)))`
-- **Example Input:** Avg Gain (14 days) = $2.50, Avg Loss (14 days) = $1.00
-- **Example Output:** `71.4` (Slightly Overbought)
+- **Definition:** Momentum oscillator identifying overbought (>70) or oversold (<30) conditions.
+
+### 8. Sloan Accruals Ratio
+- **Formula:** `(Net Income - Operating Cash Flow) / Total Assets`
+- **Definition:** Measures earnings quality. Ratios > 0.1 indicate non-cash accruals (lower quality), while ratios < 0 indicate high-quality earnings backed by real cash flow.
+
+### 9. Cash Conversion Ratio
+- **Formula:** `Operating Cash Flow / Net Income`
+- **Definition:** Checks if net income translates efficiently to usable cash flow. Ideally >= 1.0.
+
+### 10. Peer Median P/E Valuation
+- **Formula:** `Median(Trailing P/E of all batch tickers in same sector)`
+- **Definition:** Measures relative valuation pricing vs local sector peers.
+
+### 11. Moat Durability (Coefficient of Variation - CoV)
+- **Formula:** `Standard Deviation / Mean`
+- **Definition:** Calculated for Gross Margin, ROIC (Net Income / Total Assets proxy), and YoY Revenue Growth. Lower CoV indicates consistent performance and a wider business moat.
+
+### 12. Blended Composite Score
+- **Formula:** `(0.40 * Avg Momentum Percentile) + (0.35 * Scaled EPS Growth) + (0.25 * Scaled Gross Margin)`
+- **Definition:** A 1-99 score where higher numbers represent premium growth, margin, and momentum metrics.
+
+---
 
 ## File Structure
 
@@ -82,24 +112,30 @@ The platform algorithmically assesses stocks using the following mathematical fo
 fin-vantage-scout/
 ├── backend/
 │   ├── agents/
-│   │   ├── step1a_fundamentals_agent.py   # Extracts core balance sheet / margin data
-│   │   ├── step1b_momentum_agent.py       # Calculates relative return percentiles & RSI
-│   │   ├── step2_news_agent.py            # DuckDuckGo headline scraper & LLM sentiment extractor
-│   │   └── step3_synthesis_agent.py       # Synthesizes inputs into a final rating
+│   │   ├── step1a_fundamentals_agent.py   # Balance sheet health and profitability metrics
+│   │   ├── step1b_momentum_agent.py       # Relative strength calculations (6m/12m returns)
+│   │   ├── step1c_technical_agent.py      # Volume intensity, RSI, Acc/Dis, and ATR indicators
+│   │   ├── step1d_earnings_quality_agent.py# Sloan accruals and cash conversion calculations
+│   │   ├── step1e_valuation_agent.py      # Peer-relative multiples & peer median benchmarking
+│   │   ├── step1f_moat_agent.py           # Margin stability and ROIC CoV calculations
+│   │   ├── step1g_news_agent.py           # Headline scraper & sentiment classifier (final node)
+│   │   └── step2_synthesis_agent.py       # Main consensus aggregator & investment case writer
 │   ├── data/
-│   │   ├── alpha_vantage.py               # REST client for Alpha Vantage (Overview, RSI)
-│   │   └── market_data.py                 # SQLite-backed yfinance API wrapper
-│   └── app.py                             # FastAPI server & LangGraph orchestration
+│   │   ├── alpha_vantage.py               # REST API client for Alpha Vantage (Technicals, RSI)
+│   │   └── market_data.py                 # SQLite-cached yfinance SDK wrapper
+│   └── app.py                             # FastAPI server & LangGraph pipeline compiler
 ├── frontend/
 │   ├── static/
-│   │   ├── app.js                         # Frontend logic, API polling, and DOM rendering
-│   │   └── style.css                      # Custom CSS design system
+│   │   ├── app.js                         # Dynamic rendering engine & client interactions
+│   │   └── style.css                      # Custom dark-theme styling design system
 │   └── templates/
-│       └── index.html                     # Main dashboard layout
+│       └── index.html                     # Responsive single-page application template
 ├── config.py                              # Environment variables and configuration
-├── requirements.txt                       # Project dependencies
-└── README.md                              # This documentation
+├── requirements.txt                       # Backend dependency manifest
+└── README.md                              # Project documentation
 ```
+
+---
 
 ## Detailed Tech Stack Table
 
@@ -115,6 +151,8 @@ fin-vantage-scout/
 | **Caching** | SQLite | Local disk caching with TTL to prevent rate-limiting from data providers. |
 | **Frontend** | Vanilla JS / HTML / CSS | Lightweight, custom dashboard without heavy React/Vue build steps. |
 
+---
+
 ## Detailed Architecture Diagram
 
 ```mermaid
@@ -122,60 +160,23 @@ graph TD
     UI[Frontend Dashboard] -->|POST /analyze| API[FastAPI Server]
     API --> Graph[LangGraph Orchestrator]
     
-    Graph -->|Parallel Step| A[Fundamentals Agent]
-    Graph -->|Parallel Step| B[Momentum Agent]
-    Graph -->|Parallel Step| C[News Sentiment Agent]
+    Graph -->|Parallel Step 1a| A[Fundamentals Agent]
+    Graph -->|Parallel Step 1b| B[Momentum Agent]
+    Graph -->|Parallel Step 1c| C[Technical Agent]
+    Graph -->|Parallel Step 1d| D[Earnings Quality Agent]
+    Graph -->|Parallel Step 1e| E[Valuation Agent]
+    Graph -->|Parallel Step 1f| F[Moat Agent]
+    Graph -->|Parallel Step 1g| G[News Sentiment Agent]
     
-    A -->|1. yfinance<br>2. AV Fallback| DB1[(SQLite Cache)]
-    B -->|1. yfinance Returns<br>2. AV RSI| DB1
-    C -->|1. DuckDuckGo<br>2. Groq LLaMA 3| DB1
+    A & B & C & D & E & F & G --> State{Graph State}
     
-    A --> State{Graph State}
-    B --> State
-    C --> State
-    
-    State --> D[Synthesis Agent]
-    D -->|Groq LLaMA 3| Final[Final Consensus & Rating]
+    State --> H[Synthesis Agent]
+    H -->|Groq LLaMA 3| Final[Final Consensus & Rating]
     Final --> API
     API -->|JSON| UI
 ```
 
-## Technical Explanation of Each Agent and Supporting File
-
-### 1. `step1a_fundamentals_agent.py`
-- **Role:** Extracts exact mathematical ratios (Current Ratio, Debt-to-Equity, ROE, Gross Margin).
-- **Mechanism:** Queries `yfinance` first. If any critical value is `None`, it gracefully falls back to the Alpha Vantage `OVERVIEW` endpoint.
-- **Output:** `FundamentalsResult` (Pydantic model containing exact floats and data availability flags).
-
-### 2. `step1b_momentum_agent.py`
-- **Role:** Calculates relative strength and technical indicators.
-- **Mechanism:** Fetches 6-month and 12-month trailing returns for the target ticker *and* a proxy peer universe (FFTY ETF). Calculates a percentile rank (0-100) indicating how the stock compares to peers. Also fetches 14-day RSI via Alpha Vantage.
-- **Output:** `MomentumResult` (Pydantic model with percentiles, raw returns, and RSI).
-
-### 3. `step2_news_agent.py`
-- **Role:** Analyzes recent market sentiment.
-- **Mechanism:** Scrapes the latest 10 headlines using `duckduckgo_search`. Wraps these headlines in a strict prompt and sends them to LLaMA 3 to classify overall sentiment (Positive, Neutral, Negative) and generate a 1-sentence summary.
-- **Output:** `NewsResult` (Pydantic model with sentiment enum and summary).
-
-### 4. `step3_synthesis_agent.py`
-- **Role:** Final decision maker.
-- **Mechanism:** Receives the fully structured `FundamentalsResult`, `MomentumResult`, and `NewsResult`. Feeds them into LLaMA 3, instructing it to act as a senior equity analyst. It forces the LLM to output a strict JSON schema containing an investment rating (Attractive, Neutral, Caution) and 3 bullet points.
-- **Output:** `SynthesisResult` (Pydantic model representing the final verdict).
-
-### Supporting Files
-- **`app.py`:** Initializes the FastAPI app. Defines the `StateGraph` linking the agents. Includes dependency injection for configuration and enforces API rate limits (e.g., 10-ticker cap for Alpha Vantage).
-- **`data/market_data.py` & `data/alpha_vantage.py`:** Contains the physical HTTP/REST requests and `yfinance` SDK calls. Crucially implements SQLite caching (`backend_cache.db`) using an expiration TTL to ensure consecutive runs do not trigger rate limits.
-
-## System Workflow & Execution Steps
-
-1. **Request Reception:** User triggers `/analyze` via the frontend with a payload of tickers.
-2. **Quota Check:** The system verifies if the requested ticker count exceeds the safe Alpha Vantage daily limit to prevent blocking.
-3. **Graph Initialization:** LangGraph generates an empty state dictionary for a specific ticker.
-4. **Parallel Execution:** Step 1a, 1b, and 2 are executed simultaneously using Python's asyncio context.
-5. **Caching:** All external API calls immediately check the local SQLite db. If a fresh cache exists, it returns in milliseconds; otherwise, it hits the network and saves the result.
-6. **Synthesis:** Once parallel nodes complete, the graph transitions to the Synthesis node.
-7. **Response:** The populated graph state is serialized into JSON and sent back to the frontend.
-8. **UI Rendering:** The Vanilla JS frontend parses the structured JSON and dynamically builds the Stock Cards and Infographics.
+---
 
 ## Setup Instructions
 
@@ -211,23 +212,30 @@ uv run uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 Access the dashboard at `http://127.0.0.1:8000`.
 
+---
+
 ## Validations
 
-- **Pydantic Validation:** All agent outputs are strictly typed. If LLaMA 3 hallucinates a JSON key, LangChain's structured output parser throws a validation error and retries.
-- **Fallback Integrity:** If Alpha Vantage hits its 25-call daily limit, the system degrades gracefully, marking the RSI as `None` without crashing the graph.
-- **Cache Hits:** The SQLite cache actively reduces API latency by ~90% on subsequent runs for the same ticker.
+- **Structured Output Parsing:** LangChain structured parser validates JSON structures directly from LLaMA 3 to prevent formatting schema errors.
+- **Robust Degradation:** Fallbacks to Alpha Vantage for fundamentals and graceful handling of throttled API endpoints keep calculations active even on API threshold breaches.
+- **Caching Speedups:** SQLite cache reduces successive call times for identical tickers to milliseconds, saving API limits.
+
+---
 
 ## Future Scope
 
-While the current implementation is stable, future enhancements may include:
-- **Valuation Agent:** Comparing EV/EBITDA and Forward P/E against historical medians.
-- **Earnings Call Parsing:** Using RAG to extract qualitative forward guidance from SEC 10-Q filings and earnings transcripts.
-- **Portfolio Weighting:** Expanding from single-stock screening to automated portfolio optimization recommendations.
+- **Advanced Valuation Modeler:** Integrating DCF (Discounted Cash Flow) and multi-comparable valuation valuations.
+- **RAG-based Transcripts Reader:** Parsing forward guidance using transcripts from quarterly earnings calls.
+- **Portfolio Construction optimizer:** Building optimal weight allocations based on screener signals.
+
+---
 
 ## License & Intended Use
 
 **MIT License**
-This software is provided for educational and research purposes only. It does not constitute financial advice. The developers are not liable for any financial losses incurred from using this tool.
+This software is provided for educational and research purposes only. It does not constitute investment or financial advice. The developers are not liable for any financial losses incurred from using this tool.
+
+---
 
 ## Author & Contact
 
