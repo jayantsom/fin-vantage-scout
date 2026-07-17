@@ -121,21 +121,21 @@ Fundamental analysis is the process of examining a company's financial statement
 - **Definition**: The percentage change in quarterly earnings per share compared to the same quarter in the previous year.
 - **Why/How it is used**: Measures near-term profit growth acceleration. Large YoY increases indicate strong business momentum, a key component in CAN SLIM and high-growth screening.
 - **Formula**:
-  $$\text{EPS YoY Growth (\%)} = \frac{\text{Latest Qtr EPS} - \text{Prev Year Same Qtr EPS}}{\text{Prev Year Same Qtr EPS}} \times 100$$
+$$\text{EPS YoY Growth (\%)} = \frac{\text{Latest Qtr EPS} - \text{Prev Year Same Qtr EPS}}{\text{Prev Year Same Qtr EPS}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Latest Qtr EPS = $14.685
   - Same Qtr Last Year EPS = $1.000
-  - EPS YoY (Latest Qtr) = `((14.685 - 1.000) / 1.000) * 100 = 1368.5%` (XYZ's quarterly profits grew by over 13 times compared to the prior year).
+  - EPS YoY (Latest Qtr) = `(14.685 - 1.000) / 1.000 * 100 = 1368.5%` (XYZ's quarterly profits grew by over 13 times compared to the prior year).
 
 #### Sales YoY (Latest Qtr)
 - **Definition**: The percentage change in quarterly revenue compared to the same quarter in the previous year.
 - **Why/How it is used**: Validates that earnings growth is backed by topline expansion rather than just cost-cutting or financial engineering.
 - **Formula**:
-  $$\text{Sales YoY Growth (\%)} = \frac{\text{Latest Qtr Sales} - \text{Prev Year Same Qtr Sales}}{\text{Prev Year Same Qtr Sales}} \times 100$$
+$$\text{Sales YoY Growth (\%)} = \frac{\text{Latest Qtr Sales} - \text{Prev Year Same Qtr Sales}}{\text{Prev Year Same Qtr Sales}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Latest Qtr Sales = $4.457B
   - Same Qtr Last Year Sales = $1.000B
-  - Sales YoY (Latest Qtr) = `((4.457 - 1.000) / 1.000) * 100 = 345.7%` (XYZ's quarterly revenue expanded by 345.7% YoY).
+  - Sales YoY (Latest Qtr) = `(4.457 - 1.000) / 1.000 * 100 = 345.7%` (XYZ's quarterly revenue expanded by 345.7% YoY).
 
 ---
 
@@ -165,7 +165,7 @@ Momentum analysis assumes that stocks which have recently outperformed will cont
 - **Definition**: The average of a stock's 6-month and 12-month return percentile rankings relative to its peer group.
 - **Why/How it is used**: Helps filter out one-month wonders by ensuring the stock is a persistent leader across multiple lookback windows. A rank of 95 means the stock outperforms 95% of peers on average.
 - **Formula**:
-  $$\text{Average Percentile Rank} = \frac{\text{6m Return Percentile} + \text{12m Return Percentile}}{2}$$
+$$\text{Average Percentile Rank} = \frac{\text{6m Return Percentile} + \text{12m Return Percentile}}{2}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - 6m Return Percentile = 94
   - 12m Return Percentile = 96
@@ -196,27 +196,27 @@ Technical analysis evaluates market structure, trading volume, volatility, and o
 - **Definition**: The percentage difference between the current session's volume and the 50-day average trading volume.
 - **Why/How it is used**: Identifies abnormal buying or selling interest. High positive spikes on up-days indicate institutional accumulation.
 - **Formula**:
-  $$\text{Vol vs 50d Avg (\%)} = \frac{\text{Current Volume} - \text{50-Day Avg Volume}}{\text{50-Day Avg Volume}} \times 100$$
+$$\text{Vol vs 50d Avg (\%)} = \frac{\text{Current Volume} - \text{50-Day Avg Volume}}{\text{50-Day Avg Volume}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Current Volume = 45,784,925
   - 50-Day Avg Volume = 54,441,052
-  - Vol vs 50d Avg = `((45,784,925 - 54,441,052) / 54,441,052) * 100 = -15.9%` (XYZ traded on 15.9% lighter volume than its historical average).
+  - Vol vs 50d Avg = `(45,784,925 - 54,441,052) / 54,441,052 * 100 = -15.9%` (XYZ traded on 15.9% lighter volume than its historical average).
 
 #### % Off 52w High
 - **Definition**: The percentage distance between the stock's current closing price and its highest price over the last 52 weeks.
 - **Why/How it is used**: Evaluates how deep the stock is in a correction or drawdown. Growth stocks breaking out often trade within -5% to -15% of their 52-week highs.
 - **Formula**:
-  $$\text{\% Off 52w High} = \frac{\text{Current Price} - \text{52-Week High}}{\text{52-Week High}} \times 100$$
+$$\text{\% Off 52w High} = \frac{\text{Current Price} - \text{52-Week High}}{\text{52-Week High}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Current Price = $140.60
   - 52-Week High = $200.00
-  - % Off 52w High = `((140.60 - 200.00) / 200.00) * 100 = -29.7%` (XYZ is trading 29.7% below its 52-week high).
+  - % Off 52w High = `(140.60 - 200.00) / 200.00 * 100 = -29.7%` (XYZ is trading 29.7% below its 52-week high).
 
 #### Hist. Volatility
 - **Definition**: The annualized standard deviation of log returns over a 20-day trading window.
 - **Why/How it is used**: Measures historical price fluctuations. High volatility suggests greater price swings and risk.
 - **Formula**:
-  $$\text{Historical Volatility} = \text{StDev}(\ln(P_t / P_{t-1})) \times \sqrt{252} \times 100$$
+$$\text{Historical Volatility} = \text{StDev}(\ln(P_t / P_{t-1})) \times \sqrt{252} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - StDev of daily log returns over 20 days = 0.0694
   - Annualization Factor = `sqrt(252)` (approx 15.874)
@@ -233,8 +233,8 @@ Technical analysis evaluates market structure, trading volume, volatility, and o
 - **Definition**: A cumulative proxy index of money flow, indicating if the stock is being accumulated (bought) or distributed (sold) based on where it closes relative to its daily high-low range.
 - **Why/How it is used**: A positive number suggests buying pressure (closing near the high), while a negative number suggests selling pressure (closing near the low).
 - **Formula**:
-  $$\text{Money Flow Multiplier} = \frac{(\text{Close} - \text{Low}) - (\text{High} - \text{Close})}{\text{High} - \text{Low}}$$
-  $$\text{Acc/Dis Approx} = \text{Money Flow Multiplier} \times \text{Volume}$$
+$$\text{Money Flow Multiplier} = \frac{(\text{Close} - \text{Low}) - (\text{High} - \text{Close})}{\text{High} - \text{Low}}$$
+$$\text{Acc/Dis Approx} = \text{Money Flow Multiplier} \times \text{Volume}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Close = $135.00, Low = $130.00, High = $150.00, Volume = 95,002,850
   - Money Flow Multiplier = `((135 - 130) - (150 - 135)) / (150 - 130) = (5 - 15) / 20 = -0.50`
@@ -250,7 +250,7 @@ Earnings quality analysis checks whether reported net income is backed by cash c
 - **Definition**: A ratio that measures the proportion of earnings made up of non-cash accounting accruals.
 - **Why/How it is used**: Based on the Sloan (1996) study. Companies with high accruals ratios (> 0.1) often see future earnings declines. Ratios below 0 (negative) indicate earnings are highly conservative and backed by cash flow.
 - **Formula**:
-  $$\text{Sloan Accruals Ratio} = \frac{\text{Net Income} - \text{Operating Cash Flow}}{\text{Total Assets}}$$
+$$\text{Sloan Accruals Ratio} = \frac{\text{Net Income} - \text{Operating Cash Flow}}{\text{Total Assets}}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Net Income = $120M
   - Operating Cash Flow = $228M
@@ -261,7 +261,7 @@ Earnings quality analysis checks whether reported net income is backed by cash c
 - **Definition**: The ratio of operating cash flow to net income.
 - **Why/How it is used**: Evaluates how effectively a company converts its net income into cash. A ratio >= 1.0 is considered strong.
 - **Formula**:
-  $$\text{Cash Conversion Ratio} = \frac{\text{Operating Cash Flow}}{\text{Net Income}}$$
+$$\text{Cash Conversion Ratio} = \frac{\text{Operating Cash Flow}}{\text{Net Income}}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Operating Cash Flow = $246M
   - Net Income = $120M
@@ -298,7 +298,7 @@ Valuation measures relative stock price multiples to determine if a stock is ove
 - **Definition**: The median trailing P/E of all batch-analyzed tickers belonging to the exact same sector.
 - **Why/How it is used**: Serves as a relative benchmark. If XYZ's P/E is 19.29 and the Peer Median is 35.00, XYZ is relatively undervalued compared to its immediate peers.
 - **Formula**:
-  $$\text{Peer Median P/E} = \text{Median}(\text{Trailing P/Es of sector peers in batch})$$
+$$\text{Peer Median P/E} = \text{Median}(\text{Trailing P/Es of sector peers in batch})$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Batch peers in same sector are not available, or lack P/E data.
   - Peer Median P/E = `N/A` (No valid peers exist in the batch to calculate a median).
@@ -313,7 +313,7 @@ Moat analysis measures the stability and consistency of a business's operational
 - **Definition**: The Coefficient of Variation (Standard Deviation divided by the Mean) of the company's gross margins over the trailing 3-4 years.
 - **Why/How it is used**: Stable gross margins (low CoV) suggest the company has strong pricing power and faces little competitive pressure to drop prices. A CoV of 1.00 indicates a highly volatile margin profile.
 - **Formula**:
-  $$\text{Margin Stability (CoV)} = \frac{\text{StDev}(\text{Gross Margins}_{3-4y})}{\text{Mean}(\text{Gross Margins}_{3-4y})}$$
+$$\text{Margin Stability (CoV)} = \frac{\text{StDev}(\text{Gross Margins (3-4y)})}{\text{Mean}(\text{Gross Margins (3-4y)})}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - StDev of gross margins = 0.10
   - Mean of gross margins = 0.10
@@ -323,7 +323,7 @@ Moat analysis measures the stability and consistency of a business's operational
 - **Definition**: The Coefficient of Variation of the company's Return on Invested Capital (ROIC) proxy (Net Income / Total Assets) over the trailing 3-4 years.
 - **Why/How it is used**: A low CoV means the company consistently generates high returns on its investments year after year, signifying a durable economic moat.
 - **Formula**:
-  $$\text{ROIC Persistence (CoV)} = \frac{\text{StDev}(\text{ROIC Proxy}_{3-4y})}{\text{Mean}(\text{ROIC Proxy}_{3-4y})}$$
+$$\text{ROIC Persistence (CoV)} = \frac{\text{StDev}(\text{ROIC Proxy (3-4y)})}{\text{Mean}(\text{ROIC Proxy (3-4y)})}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - StDev of ROIC proxy = 0.16
   - Mean of ROIC proxy = 0.07
@@ -333,7 +333,7 @@ Moat analysis measures the stability and consistency of a business's operational
 - **Definition**: The Coefficient of Variation of the company's YoY quarterly revenue growth rates over the trailing 3-4 years.
 - **Why/How it is used**: Stable growth rates (low CoV) indicate highly predictable customer demand, typical of subscriptions or repeat consumer staples.
 - **Formula**:
-  $$\text{Rev Consistency (CoV)} = \frac{\text{StDev}(\text{YoY Rev Growth Rates}_{3-4y})}{\text{Mean}(\text{YoY Rev Growth Rates}_{3-4y})}$$
+$$\text{Rev Consistency (CoV)} = \frac{\text{StDev}(\text{YoY Revenue Growth (3-4y)})}{\text{Mean}(\text{YoY Revenue Growth (3-4y)})}$$
 - **One Solved Example (Sample Stock XYZ)**:
   - StDev of YoY revenue growth = 0.30
   - Mean of YoY revenue growth = 0.10
