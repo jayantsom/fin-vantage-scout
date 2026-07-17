@@ -121,7 +121,7 @@ Fundamental analysis is the process of examining a company's financial statement
 - **Definition**: The percentage change in quarterly earnings per share compared to the same quarter in the previous year.
 - **Why/How it is used**: Measures near-term profit growth acceleration. Large YoY increases indicate strong business momentum, a key component in CAN SLIM and high-growth screening.
 - **Formula**:
-$$\text{EPS YoY Growth (\%)} = \frac{\text{Latest Qtr EPS} - \text{Prev Year Same Qtr EPS}}{\text{Prev Year Same Qtr EPS}} \times 100$$
+$$\text{EPS YoY Growth (Percent)} = \frac{\text{Latest Qtr EPS} - \text{Prev Year Same Qtr EPS}}{\text{Prev Year Same Qtr EPS}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Latest Qtr EPS = $14.685
   - Same Qtr Last Year EPS = $1.000
@@ -131,7 +131,7 @@ $$\text{EPS YoY Growth (\%)} = \frac{\text{Latest Qtr EPS} - \text{Prev Year Sam
 - **Definition**: The percentage change in quarterly revenue compared to the same quarter in the previous year.
 - **Why/How it is used**: Validates that earnings growth is backed by topline expansion rather than just cost-cutting or financial engineering.
 - **Formula**:
-$$\text{Sales YoY Growth (\%)} = \frac{\text{Latest Qtr Sales} - \text{Prev Year Same Qtr Sales}}{\text{Prev Year Same Qtr Sales}} \times 100$$
+$$\text{Sales YoY Growth (Percent)} = \frac{\text{Latest Qtr Sales} - \text{Prev Year Same Qtr Sales}}{\text{Prev Year Same Qtr Sales}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Latest Qtr Sales = $4.457B
   - Same Qtr Last Year Sales = $1.000B
@@ -196,7 +196,7 @@ Technical analysis evaluates market structure, trading volume, volatility, and o
 - **Definition**: The percentage difference between the current session's volume and the 50-day average trading volume.
 - **Why/How it is used**: Identifies abnormal buying or selling interest. High positive spikes on up-days indicate institutional accumulation.
 - **Formula**:
-$$\text{Vol vs 50d Avg (\%)} = \frac{\text{Current Volume} - \text{50-Day Avg Volume}}{\text{50-Day Avg Volume}} \times 100$$
+$$\text{Vol vs 50d Avg (Percent)} = \frac{\text{Current Volume} - \text{50-Day Avg Volume}}{\text{50-Day Avg Volume}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Current Volume = 45,784,925
   - 50-Day Avg Volume = 54,441,052
@@ -206,7 +206,7 @@ $$\text{Vol vs 50d Avg (\%)} = \frac{\text{Current Volume} - \text{50-Day Avg Vo
 - **Definition**: The percentage distance between the stock's current closing price and its highest price over the last 52 weeks.
 - **Why/How it is used**: Evaluates how deep the stock is in a correction or drawdown. Growth stocks breaking out often trade within -5% to -15% of their 52-week highs.
 - **Formula**:
-$$\text{\% Off 52w High} = \frac{\text{Current Price} - \text{52-Week High}}{\text{52-Week High}} \times 100$$
+$$\text{Percent Off 52w High} = \frac{\text{Current Price} - \text{52-Week High}}{\text{52-Week High}} \times 100$$
 - **One Solved Example (Sample Stock XYZ)**:
   - Current Price = $140.60
   - 52-Week High = $200.00
