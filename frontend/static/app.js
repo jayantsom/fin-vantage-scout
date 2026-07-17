@@ -335,7 +335,8 @@ function buildStockCard(item) {
         </div>
         <table class="data-table">
           <thead><tr><th>Metric</th><th class="numeric">Value</th><th>Source</th></tr></thead>
-          <tbody data-group="1a. Fundamentals">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1a. Fundamentals</td></tr>
             <tr><td>Current Ratio</td><td class="numeric">${fmtNum(fundamentals.current_ratio, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>Debt-to-Equity</td><td class="numeric">${fmtNum(fundamentals.debt_to_equity, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>ROE</td><td class="numeric">${fmtPct(fundamentals.roe)}</td><td><span class="source-tag tag-api">API</span></td></tr>
@@ -343,13 +344,15 @@ function buildStockCard(item) {
             <tr><td>EPS YoY (Latest Qtr)</td><td class="numeric">${fmtNum(fundamentals.eps_pct_change_latest_qtr, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td>Sales YoY (Latest Qtr)</td><td class="numeric">${fmtNum(fundamentals.sales_pct_change_last_qtr, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
           </tbody>
-          <tbody data-group="1b. Momentum">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1b. Momentum</td></tr>
             <tr><td>6m Return</td><td class="numeric">${fmtNum(momentum.return_6m, ".1f")}%</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>12m Return</td><td class="numeric">${fmtNum(momentum.return_12m, ".1f")}%</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>Average Percentile Rank</td><td class="numeric">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m) / 2, ".0f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td>RSI (14-Day)</td><td class="numeric">${fmtNum(momentum.rsi_14, ".1f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
           </tbody>
-          <tbody data-group="1c. Technical">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1c. Technical</td></tr>
             <tr><td>Volume</td><td class="numeric">${technical.volume ? technical.volume.toLocaleString() : '--'}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>Vol vs 50d Avg</td><td class="numeric">${fmtNum(technical.volume_pct_change, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td>% Off 52w High</td><td class="numeric">${fmtNum(technical.pct_off_52w_high, ".1f")}%</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
@@ -357,22 +360,26 @@ function buildStockCard(item) {
             <tr><td>ATR (14-Day)</td><td class="numeric">${fmtNum(technical.atr, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>Acc/Dis Approx</td><td class="numeric">${fmtNum(technical.acc_dis_score, ".2f")}</td><td><span class="source-tag tag-approx">Approx</span></td></tr>
           </tbody>
-          <tbody data-group="1d. Earnings Quality">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1d. Earnings Quality</td></tr>
             <tr><td>Sloan Accruals Ratio</td><td class="numeric">${fmtNum(earnings_quality.accruals_ratio, ".3f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td>Cash Conversion Ratio</td><td class="numeric">${fmtNum(earnings_quality.cash_conversion_ratio, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
           </tbody>
-          <tbody data-group="1e. Valuation">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1e. Valuation</td></tr>
             <tr><td>Trailing P/E</td><td class="numeric">${fmtNum(valuation.pe, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>Price / Sales</td><td class="numeric">${fmtNum(valuation.ps, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>EV / EBITDA</td><td class="numeric">${fmtNum(valuation.ev_ebitda, ".2f")}</td><td><span class="source-tag tag-api">API</span></td></tr>
             <tr><td>Peer Median P/E</td><td class="numeric">${fmtNum(valuation.peer_median_pe, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
           </tbody>
-          <tbody data-group="1f. Moat">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1f. Moat</td></tr>
             <tr><td>Margin Stability (CoV)</td><td class="numeric">${fmtNum(moat.margin_stability, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td>ROIC Persistence (CoV)</td><td class="numeric">${fmtNum(moat.roic_persistence, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td>Rev Consistency (CoV)</td><td class="numeric">${fmtNum(moat.revenue_consistency, ".2f")}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
           </tbody>
-          <tbody data-group="1g. News Sentiment (LLM)">
+          <tbody>
+            <tr><td colspan="3" class="table-group-header">1g. News Sentiment (LLM)</td></tr>
             <tr><td>Sentiment Score</td><td class="numeric">${escHtml(news.sentiment)}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
             <tr><td colspan="3">${buildHeadlinesToggle(news.headlines, 'hl-' + ticker)}</td></tr>
           </tbody>

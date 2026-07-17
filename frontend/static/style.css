@@ -1520,31 +1520,18 @@ details.card-section > summary:hover {
   letter-spacing: 0.05em;
 }
 
-.data-table tbody::before {
-  content: attr(data-group);
-  display: table-row;
-  font-weight: 600;
-  color: var(--brand-teal);
-  font-size: 11px;
-  background: var(--bg-hover);
-  text-transform: uppercase;
-}
-
-/* Make tbody label take up the whole row */
-.data-table tbody[data-group]::before {
-  content: attr(data-group);
-  display: table-cell;
-  column-span: all;
+.table-group-header {
   padding: 6px 10px;
-  background: rgba(0, 180, 216, 0.05); /* very faint teal */
+  background: rgba(0, 180, 216, 0.08); /* faint teal/blue header band */
   color: var(--brand-teal);
   font-weight: 700;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.data-table td.numeric {
+.data-table .numeric {
   font-family: 'JetBrains Mono', monospace;
   text-align: right;
 }
