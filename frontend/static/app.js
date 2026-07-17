@@ -16,7 +16,7 @@ function initTheme() {
   const saved = localStorage.getItem("theme");
   const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const isDark = saved === "dark" || (!saved && systemPrefersDark);
-  
+
   if (isDark) {
     document.body.classList.remove("light-mode");
   } else {
@@ -82,18 +82,18 @@ function showMetricDoc(metricId) {
 
 /* ─── Health check ─── */
 async function checkHealth() {
-  const dot   = document.getElementById("health-dot");
+  const dot = document.getElementById("health-dot");
   const label = document.getElementById("health-label");
   try {
     const res = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(4000) });
     if (res.ok) {
-      dot.className   = "health-dot online";
+      dot.className = "health-dot online";
       label.textContent = "API Online";
     } else {
       throw new Error("non-200");
     }
   } catch {
-    dot.className   = "health-dot offline";
+    dot.className = "health-dot offline";
     label.textContent = "API Offline";
   }
 }
@@ -102,10 +102,10 @@ async function checkHealth() {
 function setMode(mode) {
   currentMode = mode;
   const btnManual = document.getElementById("btn-manual");
-  const btnAuto   = document.getElementById("btn-auto");
+  const btnAuto = document.getElementById("btn-auto");
   const manualRow = document.getElementById("manual-input-row");
-  const autoRow   = document.getElementById("auto-screen-row");
-  const preview   = document.getElementById("ticker-preview");
+  const autoRow = document.getElementById("auto-screen-row");
+  const preview = document.getElementById("ticker-preview");
 
   if (mode === "manual") {
     btnManual.classList.add("active");
@@ -113,17 +113,17 @@ function setMode(mode) {
     btnManual.setAttribute("aria-pressed", "true");
     btnAuto.setAttribute("aria-pressed", "false");
     manualRow.style.display = "flex";
-    autoRow.style.display   = "none";
-    preview.style.display   = "block";
+    autoRow.style.display = "none";
+    preview.style.display = "block";
     updateRunButton();
   } else {
     btnAuto.classList.add("active");
     btnManual.classList.remove("active");
     btnAuto.setAttribute("aria-pressed", "true");
     btnManual.setAttribute("aria-pressed", "false");
-    autoRow.style.display   = "block";
+    autoRow.style.display = "block";
     manualRow.style.display = "none";
-    preview.style.display   = "none";
+    preview.style.display = "none";
   }
 }
 
@@ -218,7 +218,7 @@ function updateLoadingStage(stage, detail) {
 
 function showError(htmlMessage) {
   const banner = document.getElementById("error-banner");
-  const text   = document.getElementById("error-text");
+  const text = document.getElementById("error-text");
   text.innerHTML = htmlMessage;
   banner.classList.add("visible");
 }
@@ -240,8 +240,8 @@ function hideResults() {
 /* ─── Card rendering ─── */
 function renderResults(data, elapsed) {
   const container = document.getElementById("results-container");
-  const grid      = document.getElementById("results-grid");
-  const metaText  = document.getElementById("results-meta-text");
+  const grid = document.getElementById("results-grid");
+  const metaText = document.getElementById("results-meta-text");
 
   const count = data.results.length;
   metaText.innerHTML = `<strong>${count}</strong> ticker${count !== 1 ? "s" : ""} analysed — completed in <strong>${elapsed}s</strong>`;
@@ -251,7 +251,7 @@ function renderResults(data, elapsed) {
     const card = buildStockCard(item);
     card.style.animationDelay = `${idx * 60}ms`;
     grid.appendChild(card);
-    
+
     // Initialize charts after appending to DOM
     setTimeout(() => {
       initChart(item.ticker, item);
@@ -300,7 +300,7 @@ function buildStockCard(item) {
   // 2. AI Analysis (Summary + Sections)
   card.innerHTML += `
     <div class="synthesis-summary" style="padding: 16px 20px 8px; font-size: 14px; color: var(--text-primary); line-height: 1.5;">
-      <strong>Mr. FinVantage Scout:</strong> ${escHtml(synthesis.summary || "No summary available.")}
+      <strong>Dr. Fin Vantage:</strong> ${escHtml(synthesis.summary || "No summary available.")}
     </div>
     <div class="ai-phrases">
       <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Growth</div><div class="ai-phrase-text">${escHtml(synthesis.growth)}</div></div>
@@ -315,7 +315,7 @@ function buildStockCard(item) {
   // 3. Quick Reference Tiles (Moved up)
   card.innerHTML += `
     <div class="quick-tiles">
-      <div class="quick-tile qt-1"><div class="quick-tile-label">Avg Pct Rank</div><div class="quick-tile-value">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m)/2, ".0f")}</div></div>
+      <div class="quick-tile qt-1"><div class="quick-tile-label">Avg Pct Rank</div><div class="quick-tile-value">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m) / 2, ".0f")}</div></div>
       <div class="quick-tile qt-2"><div class="quick-tile-label">Vol vs 50D</div><div class="quick-tile-value">${fmtNum(technical.volume_pct_change, ".1f")}%</div></div>
       <div class="quick-tile qt-3"><div class="quick-tile-label">Accruals</div><div class="quick-tile-value">${fmtNum(earnings_quality.accruals_ratio, ".3f")}</div></div>
       <div class="quick-tile qt-4"><div class="quick-tile-label">Gross Margin</div><div class="quick-tile-value">${fmtPct(fundamentals.gross_margin)}</div></div>
@@ -374,7 +374,7 @@ function buildStockCard(item) {
           </tbody>
           <tbody data-group="1g. News Sentiment (LLM)">
             <tr><td>Sentiment Score</td><td class="numeric">${escHtml(news.sentiment)}</td><td><span class="source-tag tag-calculated">Calculated</span></td></tr>
-            <tr><td colspan="3">${buildHeadlinesToggle(news.headlines, 'hl-'+ticker)}</td></tr>
+            <tr><td colspan="3">${buildHeadlinesToggle(news.headlines, 'hl-' + ticker)}</td></tr>
           </tbody>
         </table>
       </div>
@@ -443,7 +443,7 @@ function initChart(ticker, item) {
   renderChart(ticker, "price_volume");
 }
 
-window.switchChart = function(selectEl, ticker) {
+window.switchChart = function (selectEl, ticker) {
   renderChart(ticker, selectEl.value);
 }
 
@@ -451,7 +451,7 @@ function renderChart(ticker, type) {
   const containerId = `chart-${ticker}`;
   const el = document.getElementById(containerId);
   if (!el) return;
-  
+
   if (window._charts[ticker]) {
     window._charts[ticker].destroy();
   }
@@ -465,11 +465,11 @@ function renderChart(ticker, type) {
   if (type === "price_volume") {
     const ph = data.technical.price_history || [];
     const vh = data.technical.volume_history || [];
-    
+
     // Sort by date ascending for charts
-    const sortedPh = [...ph].sort((a,b) => new Date(a.date) - new Date(b.date));
-    const sortedVh = [...vh].sort((a,b) => new Date(a.date) - new Date(b.date));
-    
+    const sortedPh = [...ph].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sortedVh = [...vh].sort((a, b) => new Date(a.date) - new Date(b.date));
+
     options = {
       chart: { type: 'line', height: 280, toolbar: { show: false }, background: 'transparent', animations: { enabled: false } },
       series: [
@@ -481,13 +481,13 @@ function renderChart(ticker, type) {
       xaxis: { type: 'datetime', labels: { style: { colors: textColor } }, axisBorder: { show: false } },
       yaxis: [
         { title: { text: 'Price', style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: v => v ? v.toFixed(2) : '' } },
-        { opposite: true, title: { text: 'Volume', style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: v => v ? (v/1000000).toFixed(1)+'M' : '' } }
+        { opposite: true, title: { text: 'Volume', style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: v => v ? (v / 1000000).toFixed(1) + 'M' : '' } }
       ],
       grid: { borderColor: gridColor, strokeDashArray: 4 },
       legend: { labels: { colors: textColor } },
       theme: { mode: isDark ? 'dark' : 'light' }
     };
-  } 
+  }
   else if (type === "momentum") {
     options = {
       chart: { type: 'bar', height: 280, toolbar: { show: false }, background: 'transparent' },
@@ -503,14 +503,14 @@ function renderChart(ticker, type) {
   else if (type === "margin_roic") {
     const my = data.moat.margin_by_year || [];
     const ry = data.moat.roic_by_year || [];
-    const sortedMy = [...my].sort((a,b) => a.year - b.year);
-    const sortedRy = [...ry].sort((a,b) => a.year - b.year);
-    
+    const sortedMy = [...my].sort((a, b) => a.year - b.year);
+    const sortedRy = [...ry].sort((a, b) => a.year - b.year);
+
     if (sortedMy.length < 2) {
       el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);">Not enough historical data (<2 years)</div>`;
       return;
     }
-    
+
     options = {
       chart: { type: 'line', height: 280, toolbar: { show: false }, background: 'transparent' },
       series: [
@@ -520,7 +520,7 @@ function renderChart(ticker, type) {
       colors: ['#00b4d8', '#f0c040'],
       stroke: { curve: 'smooth', width: 2 },
       xaxis: { categories: sortedMy.map(d => d.year.toString()), labels: { style: { colors: textColor } } },
-      yaxis: { labels: { style: { colors: textColor }, formatter: v => v ? (v*100).toFixed(1)+'%' : '' } },
+      yaxis: { labels: { style: { colors: textColor }, formatter: v => v ? (v * 100).toFixed(1) + '%' : '' } },
       grid: { borderColor: gridColor, strokeDashArray: 4 },
       legend: { labels: { colors: textColor } },
       theme: { mode: isDark ? 'dark' : 'light' }
