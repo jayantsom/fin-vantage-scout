@@ -271,6 +271,33 @@ def compute_synthesis(
                 raw = raw[4:]
             raw = raw.strip()
 
+        # Sanitise: collapse any literal newlines/tabs embedded inside JSON
+        # string values. The LLM sometimes puts hard newlines in the summary
+        # field despite instructions, which breaks json.loads strictly.
+        import re as _re
+        def _fix_json_strings(text: str) -> str:
+            """Replace unescaped newlines/tabs inside JSON string literals."""
+            # Replace literal newlines inside string values with a space
+            result = []
+            in_string = False
+            escape_next = False
+            for ch in text:
+                if escape_next:
+                    result.append(ch)
+                    escape_next = False
+                elif ch == '\\':
+                    result.append(ch)
+                    escape_next = True
+                elif ch == '"':
+                    result.append(ch)
+                    in_string = not in_string
+                elif in_string and ch in ('\n', '\r', '\t'):
+                    result.append(' ')  # replace control char with space
+                else:
+                    result.append(ch)
+            return ''.join(result)
+
+        raw = _fix_json_strings(raw)
         parsed = json.loads(raw)
         rating = parsed.get("rating", "Neutral")
         if rating not in ("Attractive", "Neutral", "Caution"):

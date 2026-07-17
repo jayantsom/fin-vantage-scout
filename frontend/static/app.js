@@ -300,7 +300,7 @@ function buildStockCard(item) {
   // 2. AI Analysis (Summary + Sections)
   card.innerHTML += `
     <div class="synthesis-summary" style="padding: 16px 20px 8px; font-size: 14px; color: var(--text-primary); line-height: 1.5;">
-      <strong>Synthesis:</strong> ${escHtml(synthesis.summary || "No summary available.")}
+      <strong>Mr. FinVantage Scout:</strong> ${escHtml(synthesis.summary || "No summary available.")}
     </div>
     <div class="ai-phrases">
       <div class="ai-phrase-box" onclick="setTab('methodology')" style="cursor:pointer;" title="Click to view methodology definitions"><div class="ai-phrase-label">Growth</div><div class="ai-phrase-text">${escHtml(synthesis.growth)}</div></div>
@@ -315,11 +315,11 @@ function buildStockCard(item) {
   // 3. Quick Reference Tiles (Moved up)
   card.innerHTML += `
     <div class="quick-tiles">
-      <div class="quick-tile"><div class="quick-tile-label">Avg Pct Rank</div><div class="quick-tile-value">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m)/2, ".0f")}</div></div>
-      <div class="quick-tile"><div class="quick-tile-label">Vol vs 50D</div><div class="quick-tile-value">${fmtNum(technical.volume_pct_change, ".1f")}%</div></div>
-      <div class="quick-tile"><div class="quick-tile-label">Accruals</div><div class="quick-tile-value">${fmtNum(earnings_quality.accruals_ratio, ".3f")}</div></div>
-      <div class="quick-tile"><div class="quick-tile-label">Gross Margin</div><div class="quick-tile-value">${fmtPct(fundamentals.gross_margin)}</div></div>
-      <div class="quick-tile"><div class="quick-tile-label">P/E vs Peers</div><div class="quick-tile-value">${fmtNum(valuation.pe, ".1f")} / ${fmtNum(valuation.peer_median_pe, ".1f")}</div></div>
+      <div class="quick-tile qt-1"><div class="quick-tile-label">Avg Pct Rank</div><div class="quick-tile-value">${fmtNum((momentum.percentile_rank_6m + momentum.percentile_rank_12m)/2, ".0f")}</div></div>
+      <div class="quick-tile qt-2"><div class="quick-tile-label">Vol vs 50D</div><div class="quick-tile-value">${fmtNum(technical.volume_pct_change, ".1f")}%</div></div>
+      <div class="quick-tile qt-3"><div class="quick-tile-label">Accruals</div><div class="quick-tile-value">${fmtNum(earnings_quality.accruals_ratio, ".3f")}</div></div>
+      <div class="quick-tile qt-4"><div class="quick-tile-label">Gross Margin</div><div class="quick-tile-value">${fmtPct(fundamentals.gross_margin)}</div></div>
+      <div class="quick-tile qt-5"><div class="quick-tile-label">P/E vs Peers</div><div class="quick-tile-value">${fmtNum(valuation.pe, ".1f")} / ${fmtNum(valuation.peer_median_pe, ".1f")}</div></div>
     </div>
   `;
 

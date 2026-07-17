@@ -73,10 +73,10 @@ COMPOSITE SCORE (calculated): {composite_score} / 99
 
 --- END INPUT ---
 
-Respond in this exact JSON format (no markdown, no extra keys):
+Respond in this exact JSON format (no markdown, no extra keys, ensure all strings are on a single line without raw newlines):
 {{
   "rating": "Attractive" | "Neutral" | "Caution",
-  "summary": "<short ~30 word summary of the overall investment case>",
+  "summary": "<A 3-4 sentence detailed summary of the overall investment case. Meaningfully reason about the stock by tying together its growth, margins, technical momentum, and peer valuation parameters. MUST BE A SINGLE CONTINUOUS STRING WITHOUT NEWLINES.>",
   "growth": "<short ~15 word phrase on EPS and sales growth>",
   "quality": "<short ~15 word phrase on balance sheet and margin>",
   "valuation": "<short ~15 word phrase on multiples vs peers>",
